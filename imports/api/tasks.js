@@ -4,8 +4,6 @@ import { Meteor } from "meteor/meteor";
 import { MongoInternals } from 'meteor/mongo';
 export const Tasks = new Mongo.Collection('tasks');
 
-const dynamicCollections = {};
-
 Meteor.methods({
     // /imports/api/methods.js
 
@@ -33,6 +31,7 @@ Meteor.methods({
         await Tasks.removeAsync({ _id: id });
         console.log('Task removed ID :', id); // Add this line
     },
+    
     async 'tasks.read'(collectionName) {
         console.log(`tasks.read: Reading from collection: ${collectionName}`);  
             // let collectionInstance ;

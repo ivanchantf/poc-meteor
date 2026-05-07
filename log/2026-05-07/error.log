@@ -1,0 +1,260 @@
+[16:59:54] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[16:59:57] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:00:00] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:00:03] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:00:05] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:00:08] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:02:58] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:03:13] >>> CONTEXT: ERROR INSERT TO PWA-BACKEND: - PATH: HTTP://ABC:404/API/INSERT <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:27:48] >>> CONTEXT: ERROR INSERT TO PWA-BACKEND: - PATH: HTTP://ABC:404/API/INSERT <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:33:53] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:33:56] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:33:58] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:34:19] >>> CONTEXT: ERROR INSERT TO PWA-BACKEND: - PATH: HTTP://ABC:404/API/INSERT <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:35:05] >>> CONTEXT: ERROR UPDATE IN PWA-BACKEND: - PATH: HTTP://ABC:404/API/UPDATE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:39:29] >>> CONTEXT: ERROR INSERT TO PWA-BACKEND: - PATH: HTTP://ABC:404/API/INSERT <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:39:32] >>> CONTEXT: ERROR UPDATE IN PWA-BACKEND: - PATH: HTTP://ABC:404/API/UPDATE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:42:34] >>> CONTEXT: ERROR INSERT TO PWA-BACKEND: - PATH: HTTP://ABC:404/API/INSERT <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:42:37] >>> CONTEXT: ERROR UPDATE IN PWA-BACKEND: - PATH: HTTP://ABC:404/API/UPDATE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:42:40] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================
+[17:42:43] >>> CONTEXT: ERROR DELETE IN PWA-BACKEND: HTTP://ABC:404/API/DELETE <<<
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[CAUSE]: Error: getaddrinfo ENOTFOUND abc
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'abc'
+}
+============================================================

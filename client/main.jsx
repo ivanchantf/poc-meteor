@@ -161,26 +161,29 @@ Meteor.startup(async () => {
             console.log('Fetched latest tasks from Meteor local collection:')
             console.log(liRecords)
             console.log('Sending liRecords from meteor to pwa')
-            window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-front', 'data': liRecords }), "*");
+            let iframe= document.getElementById("dse-front");
+            if(iframe){
+              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-front', 'data': liRecords }), "*");
 
-            //ONLINE PART
-            const remoteData = await Meteor.callAsync('tasksRemote.read');
-              console.log('remote collection data fetched from meteor server:') 
-              console.log(remoteData)
-            // if (!sameListsContent(liRecords, remoteData)) {
-            //   console.warn('Data mismatch between local and remote, sending remote data to pwa for refresh')
-              window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }), "*");
+              //ONLINE PART
+              const remoteData = await Meteor.callAsync('tasksRemote.read');
+                console.log('remote collection data fetched from meteor server:') 
+                console.log(remoteData)
+              // if (!sameListsContent(liRecords, remoteData)) {
+              //   console.warn('Data mismatch between local and remote, sending remote data to pwa for refresh')
+                iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }), "*");
 
-              const retrievedData= await Meteor.callAsync('tasksExternal.read', messageObj.collection);
-              console.log('Data fetched from pwa-backend via Meteor method:', retrievedData);
+                const retrievedData= await Meteor.callAsync('tasksExternal.read', messageObj.collection);
+                console.log('Data fetched from pwa-backend via Meteor method:', retrievedData);
 
-              if(retrievedData){
-                window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh','from':'pwa-backend', 'data': retrievedData }), "*");
+                if(retrievedData){
+                  iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'pwa-backend', 'data': retrievedData }), "*");
+                }
+                else{
+                  console.warn('No data retrieved from pwa-backend, NOT sending remote data from  pwa-backend to pwa for refresh')
+                }
               }
-              else{
-                console.warn('No data retrieved from pwa-backend, NOT sending remote data from  pwa-backend to pwa for refresh')
-              }
-            // }
+              // }
             // else{
             //   console.log('✅Data is consistent between local and remote, no need to further call pwa-backend')
             //   window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }), "*");

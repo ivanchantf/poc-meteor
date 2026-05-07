@@ -54,15 +54,30 @@ Tracker.autorun(() => {
   const data = Tasks.find({}).fetch();
   console.log('Collection updated, current count of Tasks:', data.length);
 
-  const isIframe = window.parent !== window;
-  if (isIframe) {
-    console.log('Sending refresh to parent...');
-    // Use the actual reference to the top-most window
-    window.parent.postMessage({ 
-      type: 'refresh', 
-      data: data
-    }, "*"); 
-  }
+  // const isIframe = window.parent !== window;
+  // if (isIframe) {
+  //   console.log('Sending refresh to parent...');
+  //   // Use the actual reference to the top-most window
+  //   window.parent.postMessage({ 
+  //     type: 'refresh', 
+  //     data: data
+  //   }, "*"); 
+  // }
+
+  let iframe=document.getElementById("dse-front");
+  if (iframe) {
+			// Post message to iframe
+			console.log("postmessage refresh");
+			iframe?.contentWindow?.postMessage(
+				JSON.stringify({
+					type: 'refresh',
+					// collection:'tasks',
+					path:'http://abc:404/api/get-all',
+					httpType:'GET',
+					data: data
+				})
+			,'*');
+		}
 });
 
 export const App = () => {
@@ -192,18 +207,20 @@ export const App = () => {
   // if(isSyncing()){
   //   return(<p className='notice'>isSyncingDetail</p>)
   // }
+
   return (
-    <div >
+    <div style={{display:"flex",flexDirection:"row"}} >
+      <div className='border border-red-300' style={{width:"50%",height:1000}}>
 
-
-      <div><button onClick={() => test()}>Test Button </button></div><hr></hr>
+      <div><button onClick={() => test() } disabled>Test Button </button></div><hr></hr>
       <h2>Task List</h2>
       <input
         type="text"
         value={inputboxTaskText}
         onChange={(e) => setInputboxTaskText(e.target.value)}
+        disabled
       />
-      <button onClick={currentTaskCntId ? () => handleUpdateTask(currentTaskCntId, inputboxTaskText) : handleAddTask}>
+      <button onClick={currentTaskCntId ? () => handleUpdateTask(currentTaskCntId, inputboxTaskText) : handleAddTask} disabled>
         {currentTaskCntId ? 'Update Task' : 'Add Task'}
       </button>
 
@@ -216,14 +233,18 @@ export const App = () => {
               {task.text}</div>
 
             <div>
-              <button onClick={() => handleTaskEdit(task)}>Edit</button>
-              <button onClick={() => handleDeleteTask(task.cnt)}>Delete</button>
+              <button onClick={() => handleTaskEdit(task)} disabled>Edit</button>
+              <button onClick={() => handleDeleteTask(task.cnt)} >Delete</button>
 
             </div>
           </li>
         ))}
      
       </ul>
+        </div>
+        <div style={{width:"50%",height:1000}}>
+      			<iframe  id="dse-front" src="http://localhost:3010" style={{width:"100%",height:1000}}  onError={(e)=>{console.log("iframe error",e)}} ></iframe>
+        </div>
     </div>
   );
 };
