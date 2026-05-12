@@ -8,8 +8,9 @@ import { Meteor } from 'meteor/meteor';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';
 import { queueMethod } from 'meteor/jam:offline';
+import { ListenerMessage, ActionList } from './shareStates'
 
-
+// import  './App.css';
 // Tracker.autorun(function (computation) {
 //   // Meteor.subscribe('tasks');
 //   // Get the cursor for the collection
@@ -34,7 +35,7 @@ import { queueMethod } from 'meteor/jam:offline';
 //           console.log('Sending liRecords from meteor to pwa')
 //          window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh', 'data': cursor.fetch()}), "*");
 //       }
-   
+
 //     },
 //     removed: function (id) {
 //       console.log('Document removed:', id);
@@ -64,20 +65,20 @@ Tracker.autorun(() => {
   //   }, "*"); 
   // }
 
-  let iframe=document.getElementById("dse-front");
+  let iframe = document.getElementById("dse-front");
   if (iframe) {
-			// Post message to iframe
-			console.log("postmessage refresh");
-			iframe?.contentWindow?.postMessage(
-				JSON.stringify({
-					type: 'refresh',
-					// collection:'tasks',
-					path:'http://abc:404/api/get-all',
-					httpType:'GET',
-					data: data
-				})
-			,'*');
-		}
+    // Post message to iframe
+    console.log("postmessage refresh");
+    iframe?.contentWindow?.postMessage(
+      JSON.stringify({
+        type: 'refresh',
+        // collection:'tasks',
+        path: 'http://abc:404/api/get-all',
+        httpType: 'GET',
+        data: data
+      })
+      , '*');
+  }
 });
 
 export const App = () => {
@@ -86,29 +87,31 @@ export const App = () => {
   const [currentTaskCntId, setCurrentTaskCntId] = useState('');
   const isLoading = useSubscribe("tasks");
 
-  useEffect( ()=>{
-     console.log('Entering fetch Data')
-    let fetchData=async()=>{
+  const msg = useTracker(() => ListenerMessage.get());
+  const actionList = useTracker(() => ActionList.get());
+  useEffect(() => {
+    console.log('Entering fetch Data')
+    let fetchData = async () => {
       console.log('fetching data')
-        let read = await Meteor.callAsync('tasks.read');
-        console.log('remoteR')
-        console.log(read)
-        
-        // if (!Meteor.status().connected) { // check that the user is offline
-        //     console.log('=========METE-FRONT:OFFLINE NOW,will queue taskRemote.read')
-        //     queueMethod('tasksRemote.read') // the arguments should be the same form that you'd use for Meteor.callAsync
-        // }
-        // else{
-            // console.log('=========METE-FRONT:ONLINE NOW, will call taskRemote.read')
-            let remoteRead = await Meteor.callAsync('tasksRemote.read');
-        //     console.log('remoteR')
-        //     console.log(remoteRead)
-        // }
+      let read = await Meteor.callAsync('tasks.read');
+      console.log('remoteR')
+      console.log(read)
+
+      // if (!Meteor.status().connected) { // check that the user is offline
+      //     console.log('=========METE-FRONT:OFFLINE NOW,will queue taskRemote.read')
+      //     queueMethod('tasksRemote.read') // the arguments should be the same form that you'd use for Meteor.callAsync
+      // }
+      // else{
+      // console.log('=========METE-FRONT:ONLINE NOW, will call taskRemote.read')
+      let remoteRead = await Meteor.callAsync('tasksRemote.read');
+      //     console.log('remoteR')
+      //     console.log(remoteRead)
+      // }
     };
     //  fetchData()
 
-  },[])
-  let tasks=useTracker(()=>{return Tasks.find({}).fetch()})
+  }, [])
+  let tasks = useTracker(() => { return Tasks.find({}).fetch() })
 
 
 
@@ -132,14 +135,14 @@ export const App = () => {
       let uid = generateUniqueId()
       Meteor.callAsync('tasks.insert', inputboxTaskText, uid);
 
-      
+
       // if (!Meteor.status().connected) {
       //   console.log('=========METE-FRONT:handleAddTask: OFFLINE NOW,will do insert when go back online')
       //   queueMethod('tasksRemote.insert', inputboxTaskText, uid)
       // }
       // else {
       //   console.log('=========METE-FRONT:handleAddTask: ONLINE NOW, will do insert to remote now')
-        Meteor.callAsync('tasksRemote.insert', inputboxTaskText, uid);
+      Meteor.callAsync('tasksRemote.insert', inputboxTaskText, uid);
       // }
       setInputboxTaskText('')
     }
@@ -157,7 +160,7 @@ export const App = () => {
       // }
       // else {
       //   console.log('=========METE-FRONT:ONLINE NOW, will do taskRemote.update')
-        Meteor.callAsync('tasksRemote.update', cntId, text);
+      Meteor.callAsync('tasksRemote.update', cntId, text);
       // }
       setCurrentTaskCntId('');
       setInputboxTaskText('')
@@ -167,14 +170,14 @@ export const App = () => {
   const handleDeleteTask = (cntId) => {
     console.log('handleDeleteTask-Deleting ', cntId)
     Meteor.callAsync('tasks.remove', cntId);
-    
+
     // if (!Meteor.status().connected) {
     //   console.log('=========METE-FRONT:OFFLINE NOW,will do taskRemote.remove')
     //   queueMethod('tasksRemote.remove', cntId)
     // }
     // else {
     //   console.log('=========METE-FRONT:ONLINE NOW, will do taskRemote.remove')
-      Meteor.callAsync('tasksRemote.remove', cntId);
+    Meteor.callAsync('tasksRemote.remove', cntId);
     // }
 
   };
@@ -200,51 +203,86 @@ export const App = () => {
     let a = await Tasks.find().fetch()
     console.log(a)
   }
-//   if (isLoading()) {
-//   return <div>Loading...</div>; // Avoid rendering until subscription is ready
-// }
+  //   if (isLoading()) {
+  //   return <div>Loading...</div>; // Avoid rendering until subscription is ready
+  // }
 
   // if(isSyncing()){
   //   return(<p className='notice'>isSyncingDetail</p>)
   // }
 
   return (
-    <div style={{display:"flex",flexDirection:"row"}} >
-      <div className='border border-red-300' style={{width:"50%",height:1000}}>
+    <div >
+      <div style={{
+        display: "flex", flexDirection: "row"
 
-      <div><button onClick={() => test() } disabled>Test Button </button></div><hr></hr>
-      <h2>Task List</h2>
-      <input
-        type="text"
-        value={inputboxTaskText}
-        onChange={(e) => setInputboxTaskText(e.target.value)}
-        disabled
-      />
-      <button onClick={currentTaskCntId ? () => handleUpdateTask(currentTaskCntId, inputboxTaskText) : handleAddTask} disabled>
-        {currentTaskCntId ? 'Update Task' : 'Add Task'}
-      </button>
-
-      <ul>
-        {tasks.map((task) => (
-
-          <li key={task._id+Math.random()} className='list-item'>
-            <p className='item-id'>{task.cnt}</p>
-            <div>
-              {task.text}</div>
-
-            <div>
-              <button onClick={() => handleTaskEdit(task)} disabled>Edit</button>
-              <button onClick={() => handleDeleteTask(task.cnt)} >Delete</button>
-
+      }} >
+        <div className='border border-red-300' style={{ width: "30%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
+          <section style={{ marginTop: 20, border: '3px solid #00648bff', padding: 10, borderRadius: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column" }}><button style={{ width: "50%", margin: '3px' }} onClick={() => ActionList.set([])}>Clear Log</button>
+              <div className="terminal-container">
+                <ul className="terminal-list">
+                  {actionList.map((action, index) => (
+                    <li key={index}>{action}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </li>
-        ))}
-     
-      </ul>
+          </section>
+          <div style={{ display: "flex", flexDirection: "row" }}>
+
+            {msg &&
+              <section style={{ border: '4px solid black', width: "100%", }}>
+                <h2>RECEIVED:</h2>
+                <div style={{ padding: '20px', backgroundColor: '#282c34', color: '#abb2bf', borderRadius: '8px' }}>
+                  <pre style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>
+                    {JSON.stringify(JSON.parse(msg), null, 2)}
+                  </pre>
+                </div>
+              </section>}
+
+
+          </div>
+          <section style={{ width: "100%", border: '5px solid #00648bff' }} id='minimongo-section'>
+            <h2>List of records - [minimongo]</h2>
+            <input
+              type="text"
+              value={inputboxTaskText}
+              onChange={(e) => setInputboxTaskText(e.target.value)}
+              disabled
+            />
+            <button onClick={currentTaskCntId ? () => handleUpdateTask(currentTaskCntId, inputboxTaskText) : handleAddTask} disabled>
+              {currentTaskCntId ? 'Update Task' : 'Add Task'}
+            </button>
+
+            <ul style={{ fontSize: '5px', padding: 0, marginTop: 20 }}>
+              {tasks.map((task) => (
+
+                <li key={task._id + Math.random()} className='list-item'>
+                  <p className='item-id'>{task.cnt}</p>
+                  <div>
+                    {task.text}</div>
+
+                  <div>
+                    <button onClick={() => handleTaskEdit(task)} disabled>Edit</button>
+                    <button onClick={() => handleDeleteTask(task.cnt)} disabled>Delete</button>
+
+                  </div>
+                </li>
+              ))}
+
+            </ul>
+          </section>
+
+          <div>
+            <button onClick={() => test()} disabled>Test Button </button>
+          </div>
+
         </div>
-        <div style={{width:"50%",height:1000}}>
-      			<iframe  id="dse-front" src="http://localhost:3010" style={{width:"100%",height:1000}}  onError={(e)=>{console.log("iframe error",e)}} ></iframe>
+        <div style={{ width: "70%", height: 1000 }}>
+          <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
+      </div>
     </div>
   );
 };

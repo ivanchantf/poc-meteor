@@ -9,6 +9,10 @@ import { Tracker } from "meteor/tracker";
 import { queueMethod } from 'meteor/jam:offline';
 import '../offline';
 import _ from 'lodash';
+import { ListenerMessage,ActionList,addToActionList } from '../imports/ui/shareStates';
+
+
+
 Meteor.startup(async () => {
 
   console.log('Meteor client started');
@@ -55,9 +59,14 @@ Meteor.startup(async () => {
     window.addEventListener('message', async message => {
       try {
         console.log('METEROR-FRONT: Received message from service worker:', message.data);
+        
         let m = "";
 
         let messageObj = JSON.parse(message.data)
+        if(messageObj.type){
+          ListenerMessage.set(message.data)
+        }
+        
         console.log('METEROR-FRONT: \n*********************************************************************\nParsed message object from service worker:\n****************************************\n');
         console.log(messageObj)
 
@@ -79,9 +88,13 @@ Meteor.startup(async () => {
               }
 
               let uid = generateUniqueId()
-
+              addToActionList(`▶️Start - 'tasks.insert'${JSON.stringify(messageObj.data)} `)
               await Meteor.callAsync('tasks.insert', messageObj.data, uid);
+              addToActionList(`🟡Completed- 'tasks.insert' ${JSON.stringify(messageObj.data)}`)
 
+
+
+           
               // if (!Meteor.status().connected) {
               //   console.log('***********OFFLINE NOW,will do insert when go back online')
               //   queueMethod('tasksRemote.insert', messageObj.data.text, uid)
@@ -90,10 +103,14 @@ Meteor.startup(async () => {
                 // console.log('***********ONLINE NOW, will do insert to remote now')
                    
                 console.log('METEROR-FRONT: will call tasksRemote.insert for save')
+                addToActionList(`▶️Start - 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
                 await Meteor.callAsync('tasksRemote.insert', messageObj.data, uid);
-                
+                addToActionList(`🟡Completed- 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
+
+                addToActionList(`▶️Start - 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
                 console.log('METEROR-FRONT: will call tasksExternal.insert for save')
                 await Meteor.callAsync('tasksExternal.insert', messageObj);
+                addToActionList(`🟡Completed- 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
               // }
 
               console.log('Task saved:', messageObj.data);
@@ -104,8 +121,9 @@ Meteor.startup(async () => {
           case "update":
             if (messageObj.data) {
               console.log('updating')
+               addToActionList(`▶️Start - tasks.update  ${JSON.stringify(messageObj.data)}`)
               await Meteor.callAsync('tasks.update', messageObj.data);
-
+               addToActionList(`🟡Completed- tasks.update ${JSON.stringify(messageObj.data)}`)
 
 
               // if (!Meteor.status().connected) {
@@ -114,12 +132,15 @@ Meteor.startup(async () => {
               // }
               // else {
               //   console.log('************ONLINE NOW, will call taskRemote.update')
+               addToActionList(`▶️Start - tasksRemote.update ${JSON.stringify(messageObj.data)}`)
                 await Meteor.callAsync('tasksRemote.update', messageObj.data);
               // }
+               addToActionList(`🟡Completed- tasksRemote.update ${JSON.stringify(messageObj.data)}`)
 
                 console.log('METEROR-FRONT: will call tasksExternal.update ')
+                addToActionList(`▶️Start - tasksExternal.update ${JSON.stringify(messageObj.data)}`)
                 await Meteor.callAsync('tasksExternal.update', messageObj);
-
+    addToActionList(`🟡Completed- tasksExternal.update ${JSON.stringify(messageObj.data)}`)
 
               console.log('Task updated:', messageObj.data);
             } else {
@@ -129,19 +150,25 @@ Meteor.startup(async () => {
           case "delete":
             if (messageObj.data) {
               console.log('deleting')
+                 addToActionList(`▶️Start - tasks.remove ${JSON.stringify(messageObj.data)}`)
               await Meteor.callAsync('tasks.remove', messageObj.data._id);
+              addToActionList(`🟡Completed- tasks.remove ${JSON.stringify(messageObj.data)}`)
               // if (!Meteor.status().connected) {
               //   console.log('************OFFLINE NOW,will queue taskRemote.remove')
               //   queueMethod('tasksRemote.remove', messageObj.data.cnt)
               // }
               // else {
                 // console.log('************ONLINE NOW, will call taskRemote.remove')
+                 addToActionList(`▶️Start- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
                 await Meteor.callAsync('tasksRemote.remove', messageObj.data._id);
+                addToActionList(`🟡Completed- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
               // }
+              
                 console.log('METEROR-FRONT: will call tasksExternal.remove ')
+                       addToActionList(`▶️Start- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
                 await Meteor.callAsync('tasksExternal.remove', messageObj);
 
-
+        addToActionList(`🟡Completed- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
               console.log('Task deleted:', messageObj.data);
             } else {
               console.error('delete error');
@@ -153,7 +180,9 @@ Meteor.startup(async () => {
             console.log(`METEOR-FRONT: Received refresh message from service worker, will fetch latest tasks and send back to pwa`)
             // const sub = await subscribeAndWait('tasks')
             // console.log(sub.ready())
+                    addToActionList(`▶️Start- tasks.read `)
             liRecords = await Meteor.callAsync('tasks.read');
+            addToActionList(`🟡Completed- tasks.read `)
             // .forEach((msg) => {
             //       liRecords += JSON.stringify(msg) + "\n";
 
@@ -166,14 +195,18 @@ Meteor.startup(async () => {
               iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-front', 'data': liRecords }), "*");
 
               //ONLINE PART
+              addToActionList(`▶️Start- tasksRemote.read `)
               const remoteData = await Meteor.callAsync('tasksRemote.read');
+                addToActionList(`🟡Completed- tasksRemote.read `)
                 console.log('remote collection data fetched from meteor server:') 
                 console.log(remoteData)
               // if (!sameListsContent(liRecords, remoteData)) {
               //   console.warn('Data mismatch between local and remote, sending remote data to pwa for refresh')
                 iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }), "*");
 
+                  addToActionList(`▶️Start- tasksExternal.read `)
                 const retrievedData= await Meteor.callAsync('tasksExternal.read', messageObj.collection);
+                  addToActionList(`🟡Completed- tasksExternal.read `)
                 console.log('Data fetched from pwa-backend via Meteor method:', retrievedData);
 
                 if(retrievedData){
