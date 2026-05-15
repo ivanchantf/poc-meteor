@@ -80,9 +80,28 @@ Tracker.autorun(() => {
       , '*');
   }
 });
-
+const OfflineQueue = Mongo.Collection.get('jam_offline_methods');
 export const App = () => {
   // const [tasks, setTasks] = useState([]);
+
+  const { queueCount, isConnected } = useTracker(() => {
+    const isDDPConnected = Meteor.status().connected;
+  const isBrowserOnline = navigator.onLine;
+    return {
+      // Use optional chaining just in case it's not initialized yet
+      queueCount: OfflineQueue?.find().count() || 0,
+      isConnected:isDDPConnected && isBrowserOnline,
+    };
+  }, []);
+
+  // Your logic to react when the app comes back online
+  useEffect(() => {
+    if (isConnected && queueCount > 0) {
+      console.log(`Syncing ${queueCount} items to the server...`);
+    }
+  }, [isConnected, queueCount]);
+
+
   const [inputboxTaskText, setInputboxTaskText] = useState('');
   const [currentTaskCntId, setCurrentTaskCntId] = useState('');
   const isLoading = useSubscribe("tasks");
@@ -112,11 +131,6 @@ export const App = () => {
 
   }, [])
   let tasks = useTracker(() => { return Tasks.find({}).fetch() })
-
-
-
-
-
 
   const generateUniqueId = () => {
     let generateRandomString = (length) => {
@@ -213,11 +227,21 @@ export const App = () => {
 
   return (
     <div >
+      <div>
+      {queueCount > 0 ? (
+        <div className="sync-status">🔄 Syncing {queueCount} pending tasks...</div>
+      ) : (
+        <div className="online-status">{isConnected ? '✅ Online' : 'Offline'}</div>
+      )}
+    </div>
       <div style={{
-        display: "flex", flexDirection: "row"
+        display: "flex", flexDirection: "column"
 
-      }} >
-        <div className='border border-red-300' style={{ width: "30%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
+      }} >        
+      <div style={{ width: "100%", height: 1000 }}>
+          <iframe id="dse-front" src="http://10.0.2.2:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
+        </div>
+        <div  className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
           <section style={{ marginTop: 20, border: '3px solid #00648bff', padding: 10, borderRadius: 5 }}>
             <div style={{ display: "flex", flexDirection: "column" }}><button style={{ width: "50%", margin: '3px' }} onClick={() => ActionList.set([])}>Clear Log</button>
               <div className="terminal-container">
@@ -229,7 +253,7 @@ export const App = () => {
               </div>
             </div>
           </section>
-          <div style={{ display: "flex", flexDirection: "row" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
 
             {msg &&
               <section style={{ border: '4px solid black', width: "100%", }}>
@@ -247,6 +271,7 @@ export const App = () => {
             <h2>List of records - [minimongo]</h2>
             <input
               type="text"
+              style={{ width: "10px"}}
               value={inputboxTaskText}
               onChange={(e) => setInputboxTaskText(e.target.value)}
               disabled
@@ -260,7 +285,7 @@ export const App = () => {
 
                 <li key={task._id + Math.random()} className='list-item'>
                   <p className='item-id'>{task.cnt}</p>
-                  <div>
+                  <div   style={{ width: "10px"}}>
                     {task.text}</div>
 
                   <div>
@@ -279,9 +304,7 @@ export const App = () => {
           </div>
 
         </div>
-        <div style={{ width: "70%", height: 1000 }}>
-          <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
-        </div>
+
       </div>
     </div>
   );

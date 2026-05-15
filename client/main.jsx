@@ -11,10 +11,21 @@ import '../offline';
 import _ from 'lodash';
 import { ListenerMessage,ActionList,addToActionList } from '../imports/ui/shareStates';
 
+Meteor.startup(async () => 
+  {
 
+    
+    
+  document.addEventListener('deviceready', function () {
+      // cordova.plugins.backgroundMode is now available
+      console.log('Device is ready, cordova.plugins.backgroundMode is available');
+      cordova.plugins.backgroundMode.setEnabled(true);
+      // setInterval(()=>{
+      // cordova.plugins.backgroundMode.isActive()?console.log('Background mode is active') : console.log('Background mode is not active');
 
-Meteor.startup(async () => {
+      // },5000)
 
+  }, false);
   console.log('Meteor client started');
   let liRecords = [];
   const subscribeAndWait = (name, ...args) => {
@@ -88,9 +99,23 @@ Meteor.startup(async () => {
               }
 
               let uid = generateUniqueId()
-              addToActionList(`▶️Start - 'tasks.insert'${JSON.stringify(messageObj.data)} `)
-              await Meteor.callAsync('tasks.insert', messageObj.data, uid);
-              addToActionList(`🟡Completed- 'tasks.insert' ${JSON.stringify(messageObj.data)}`)
+              // addToActionList(`▶️Start - 'tasks.insert'${JSON.stringify(messageObj.data)} `)
+
+
+          
+            await Meteor.applyAsync('tasks.insert', [{ text: messageObj.data.text }, uid], { noRetry: true });
+              console.log('Meteor.status().connected:', Meteor.status().connected)
+              if(!Meteor.status().connected){
+                console.log('***********OFFLINE NOW,queue Method tasks.insert for later')
+               queueMethod('tasks.insert', messageObj.data, uid)
+              }
+              // else{
+              //   console.log('***********ONLINE NOW, will do insert to local now')
+              //   await Meteor.callAsync('tasks.insert', messageObj.data, uid);
+              // }
+
+              // await Meteor.callAsync('tasks.insert', messageObj.data, uid);
+              // addToActionList(`🟡Completed- 'tasks.insert' ${JSON.stringify(messageObj.data)}`)
 
 
 
@@ -102,15 +127,15 @@ Meteor.startup(async () => {
               // else {
                 // console.log('***********ONLINE NOW, will do insert to remote now')
                    
-                console.log('METEROR-FRONT: will call tasksRemote.insert for save')
-                addToActionList(`▶️Start - 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
-                await Meteor.callAsync('tasksRemote.insert', messageObj.data, uid);
-                addToActionList(`🟡Completed- 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
+                // console.log('METEROR-FRONT: will call tasksRemote.insert for save')
+                // addToActionList(`▶️Start - 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
+                // await Meteor.callAsync('tasksRemote.insert', messageObj.data, uid);
+                // addToActionList(`🟡Completed- 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
 
-                addToActionList(`▶️Start - 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
-                console.log('METEROR-FRONT: will call tasksExternal.insert for save')
-                await Meteor.callAsync('tasksExternal.insert', messageObj);
-                addToActionList(`🟡Completed- 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
+                // addToActionList(`▶️Start - 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
+                // console.log('METEROR-FRONT: will call tasksExternal.insert for save')
+                // await Meteor.callAsync('tasksExternal.insert', messageObj);
+                // addToActionList(`🟡Completed- 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
               // }
 
               console.log('Task saved:', messageObj.data);
@@ -121,9 +146,21 @@ Meteor.startup(async () => {
           case "update":
             if (messageObj.data) {
               console.log('updating')
-               addToActionList(`▶️Start - tasks.update  ${JSON.stringify(messageObj.data)}`)
-              await Meteor.callAsync('tasks.update', messageObj.data);
-               addToActionList(`🟡Completed- tasks.update ${JSON.stringify(messageObj.data)}`)
+              //  addToActionList(`▶️Start - tasks.update  ${JSON.stringify(messageObj.data)}`)
+              
+              await Meteor.applyAsync('tasks.update', [messageObj.data], {
+                noRetry: true,
+
+              });
+              // if(!Meteor.status().connected){
+              //   console.log('***********OFFLINE NOW,queue Method update for later')
+              //  queueMethod('tasks.update', messageObj.data)
+              // }
+              // else{
+              //   console.log('***********ONLINE NOW, will do update to local now')
+               
+              // }
+              //  addToActionList(`🟡Completed- tasks.update ${JSON.stringify(messageObj.data)}`)
 
 
               // if (!Meteor.status().connected) {
@@ -132,15 +169,15 @@ Meteor.startup(async () => {
               // }
               // else {
               //   console.log('************ONLINE NOW, will call taskRemote.update')
-               addToActionList(`▶️Start - tasksRemote.update ${JSON.stringify(messageObj.data)}`)
-                await Meteor.callAsync('tasksRemote.update', messageObj.data);
+              //  addToActionList(`▶️Start - tasksRemote.update ${JSON.stringify(messageObj.data)}`)
+                // await Meteor.callAsync('tasksRemote.update', messageObj.data);
               // }
-               addToActionList(`🟡Completed- tasksRemote.update ${JSON.stringify(messageObj.data)}`)
+              //  addToActionList(`🟡Completed- tasksRemote.update ${JSON.stringify(messageObj.data)}`)
 
-                console.log('METEROR-FRONT: will call tasksExternal.update ')
-                addToActionList(`▶️Start - tasksExternal.update ${JSON.stringify(messageObj.data)}`)
-                await Meteor.callAsync('tasksExternal.update', messageObj);
-    addToActionList(`🟡Completed- tasksExternal.update ${JSON.stringify(messageObj.data)}`)
+                // console.log('METEROR-FRONT: will call tasksExternal.update ')
+                // addToActionList(`▶️Start - tasksExternal.update ${JSON.stringify(messageObj.data)}`)
+                // await Meteor.callAsync('tasksExternal.update', messageObj);
+    // addToActionList(`🟡Completed- tasksExternal.update ${JSON.stringify(messageObj.data)}`)
 
               console.log('Task updated:', messageObj.data);
             } else {
@@ -150,25 +187,37 @@ Meteor.startup(async () => {
           case "delete":
             if (messageObj.data) {
               console.log('deleting')
-                 addToActionList(`▶️Start - tasks.remove ${JSON.stringify(messageObj.data)}`)
-              await Meteor.callAsync('tasks.remove', messageObj.data._id);
-              addToActionList(`🟡Completed- tasks.remove ${JSON.stringify(messageObj.data)}`)
+                //  addToActionList(`▶️Start - tasks.remove ${JSON.stringify(messageObj.data)}`)
+              await Meteor.applyAsync('tasks.remove', [messageObj.data._id], {
+                noRetry: true
+              });
+     
+                   
+              // if(!Meteor.status().connected){
+              //   console.log('***********OFFLINE NOW,queue Method tasks.remove for later')
+              //  queueMethod('tasks.remove', messageObj.data._id)
+              // }
+              // else{
+              //   console.log('***********ONLINE NOW, will do remove to local now')
+                    
+              // }
+              // addToActionList(`🟡Completed- tasks.remove ${JSON.stringify(messageObj.data)}`)
               // if (!Meteor.status().connected) {
               //   console.log('************OFFLINE NOW,will queue taskRemote.remove')
               //   queueMethod('tasksRemote.remove', messageObj.data.cnt)
               // }
               // else {
                 // console.log('************ONLINE NOW, will call taskRemote.remove')
-                 addToActionList(`▶️Start- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
-                await Meteor.callAsync('tasksRemote.remove', messageObj.data._id);
-                addToActionList(`🟡Completed- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
+                //  addToActionList(`▶️Start- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
+                // await Meteor.callAsync('tasksRemote.remove', messageObj.data._id);
+                // addToActionList(`🟡Completed- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
               // }
               
-                console.log('METEROR-FRONT: will call tasksExternal.remove ')
-                       addToActionList(`▶️Start- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
-                await Meteor.callAsync('tasksExternal.remove', messageObj);
+                // console.log('METEROR-FRONT: will call tasksExternal.remove ')
+                      //  addToActionList(`▶️Start- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
+                // await Meteor.callAsync('tasksExternal.remove', messageObj);
 
-        addToActionList(`🟡Completed- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
+        // addToActionList(`🟡Completed- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
               console.log('Task deleted:', messageObj.data);
             } else {
               console.error('delete error');
@@ -180,9 +229,9 @@ Meteor.startup(async () => {
             console.log(`METEOR-FRONT: Received refresh message from service worker, will fetch latest tasks and send back to pwa`)
             // const sub = await subscribeAndWait('tasks')
             // console.log(sub.ready())
-                    addToActionList(`▶️Start- tasks.read `)
+                    // addToActionList(`▶️Start- tasks.read `)
             liRecords = await Meteor.callAsync('tasks.read');
-            addToActionList(`🟡Completed- tasks.read `)
+            // addToActionList(`🟡Completed- tasks.read `)
             // .forEach((msg) => {
             //       liRecords += JSON.stringify(msg) + "\n";
 
@@ -192,29 +241,29 @@ Meteor.startup(async () => {
             console.log('Sending liRecords from meteor to pwa')
             let iframe= document.getElementById("dse-front");
             if(iframe){
-              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-front', 'data': liRecords }), "*");
+              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-front', 'data': liRecords }),'*');
 
               //ONLINE PART
-              addToActionList(`▶️Start- tasksRemote.read `)
-              const remoteData = await Meteor.callAsync('tasksRemote.read');
-                addToActionList(`🟡Completed- tasksRemote.read `)
-                console.log('remote collection data fetched from meteor server:') 
-                console.log(remoteData)
+              // addToActionList(`▶️Start- tasksRemote.read `)
+              // const remoteData = await Meteor.callAsync('tasksRemote.read');
+                // addToActionList(`🟡Completed- tasksRemote.read `)
+                // console.log('remote collection data fetched from meteor server:') 
+                // console.log(remoteData)
               // if (!sameListsContent(liRecords, remoteData)) {
               //   console.warn('Data mismatch between local and remote, sending remote data to pwa for refresh')
-                iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }), "*");
+                // iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }),'*');
 
-                  addToActionList(`▶️Start- tasksExternal.read `)
-                const retrievedData= await Meteor.callAsync('tasksExternal.read', messageObj.collection);
-                  addToActionList(`🟡Completed- tasksExternal.read `)
-                console.log('Data fetched from pwa-backend via Meteor method:', retrievedData);
+                  // addToActionList(`▶️Start- tasksExternal.read `)
+                // const retrievedData= await Meteor.callAsync('tasksExternal.read', messageObj.collection);
+                  // addToActionList(`🟡Completed- tasksExternal.read `)
+                // console.log('Data fetched from pwa-backend via Meteor method:', retrievedData);
 
-                if(retrievedData){
-                  iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'pwa-backend', 'data': retrievedData }), "*");
-                }
-                else{
-                  console.warn('No data retrieved from pwa-backend, NOT sending remote data from  pwa-backend to pwa for refresh')
-                }
+                // if(retrievedData){
+                  // iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'pwa-backend', 'data': retrievedData }), '*');
+                // }
+                // else{
+                  // console.warn('No data retrieved from pwa-backend, NOT sending remote data from  pwa-backend to pwa for refresh')
+                // }
               }
               // }
             // else{
