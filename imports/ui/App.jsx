@@ -86,11 +86,11 @@ export const App = () => {
 
   const { queueCount, isConnected } = useTracker(() => {
     const isDDPConnected = Meteor.status().connected;
-  const isBrowserOnline = navigator.onLine;
+    const isBrowserOnline = navigator.onLine;
     return {
       // Use optional chaining just in case it's not initialized yet
       queueCount: OfflineQueue?.find().count() || 0,
-      isConnected:isDDPConnected && isBrowserOnline,
+      isConnected: isDDPConnected && isBrowserOnline,
     };
   }, []);
 
