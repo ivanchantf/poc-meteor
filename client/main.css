@@ -81,3 +81,48 @@ h1{
   background: #333;
   border-radius: 1px;
 }
+/* Full-screen overlay */
+.sync-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7); /* Darkens the screen */
+  backdrop-filter: blur(4px);           /* Blurs the background app */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;                        /* Ensures it sits on top of everything */
+}
+
+/* Modal box for the text */
+.sync-content {
+  background-color: #222;               /* Dark card background */
+  color: #fff;
+  padding: 2rem 3rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 1.2rem;
+}
+
+/* Spinning animation for the emoji */
+.sync-spinner {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Optional styling for the success message */
+.sync-success {
+  color: #2e7d32;
+  font-weight: bold;
+  padding: 1rem;
+}

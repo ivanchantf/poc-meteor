@@ -10,11 +10,47 @@ import { queueMethod } from 'meteor/jam:offline';
 import '../offline';
 import _ from 'lodash';
 import { ListenerMessage,ActionList,addToActionList } from '../imports/ui/shareStates';
+import { Offline } from 'meteor/jam:offline';
 
+const injectUserID=()=>{
+  const FAKE_USER_ID = 'fake-user-12345';
+  const FAKE_USER_OBJECT = {
+    _id: FAKE_USER_ID,
+    username: 'dev_mock_user',
+    emails: [{ address: 'mock@example.com', verified: true }],
+    profile: { name: 'Development Mock Account' }
+  };
+
+  // 2. Create a local reactive dependency to satisfy Tracker blocks
+  const userIdDep = new Tracker.Dependency();
+
+  // 3. Override Meteor's core authentication methods
+  Meteor.userId = () => {
+    userIdDep.depend(); // Registers this function as reactive
+    return FAKE_USER_ID;
+  };
+
+  Meteor.user = () => {
+    userIdDep.depend();
+    return FAKE_USER_OBJECT ;
+  };
+
+  Meteor.loggingIn = () => {
+    return false;
+  };
+
+  // 4. Force an initial flush to let packages know a user exists right away
+  Tracker.nonreactive(() => {
+    userIdDep.changed();
+  });
+
+  console.log("🛠️ Dev Mode: Injected reactive fake user session:", FAKE_USER_ID);
+}
 Meteor.startup(async () => 
   {
 
-    
+   injectUserID()
+
     
   document.addEventListener('deviceready', function () {
       // cordova.plugins.backgroundMode is now available
@@ -38,7 +74,7 @@ Meteor.startup(async () =>
   };
 
    try {
-    // await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
+     await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
     const container = document.getElementById('react-target'); //react-target is the id of the div in main.html where we want to render our React app
     Tracker.autorun((com)=>{
       const sub= Meteor.subscribe("tasks")
@@ -102,12 +138,13 @@ Meteor.startup(async () =>
               // addToActionList(`▶️Start - 'tasks.insert'${JSON.stringify(messageObj.data)} `)
 
 
-          
-            await Meteor.applyAsync('tasks.insert', [{ text: messageObj.data.text }, uid], { noRetry: true });
+
+             await Meteor.applyAsync('tasks.insert', [{ text: messageObj.data.text }, uid], { noRetry: true }
+              ,(err,res)=>{if(err){console.log('method failed',err)}});
               console.log('Meteor.status().connected:', Meteor.status().connected)
               if(!Meteor.status().connected){
                 console.log('***********OFFLINE NOW,queue Method tasks.insert for later')
-               queueMethod('tasks.insert', messageObj.data, uid)
+               queueMethod('tasks.insert',{ text: messageObj.data.text }, uid)
               }
               // else{
               //   console.log('***********ONLINE NOW, will do insert to local now')
@@ -148,10 +185,15 @@ Meteor.startup(async () =>
               console.log('updating')
               //  addToActionList(`▶️Start - tasks.update  ${JSON.stringify(messageObj.data)}`)
               
-              await Meteor.applyAsync('tasks.update', [messageObj.data], {
-                noRetry: true,
+              const updateArgs = [messageObj.data];
 
-              });
+// Optimistically update local cache
+await Meteor.applyAsync('tasks.update', updateArgs, { noRetry: true });
+
+if (!Meteor.status().connected) {
+    // Spread the arguments array so jam:offline handles the data parameter perfectly
+    queueMethod('tasks.update', ...updateArgs); 
+}
               // if(!Meteor.status().connected){
               //   console.log('***********OFFLINE NOW,queue Method update for later')
               //  queueMethod('tasks.update', messageObj.data)
@@ -185,42 +227,31 @@ Meteor.startup(async () =>
             }
             break;
           case "delete":
-            if (messageObj.data) {
-              console.log('deleting')
-                //  addToActionList(`▶️Start - tasks.remove ${JSON.stringify(messageObj.data)}`)
-              await Meteor.applyAsync('tasks.remove', [messageObj.data._id], {
-                noRetry: true
-              });
-     
-                   
-              // if(!Meteor.status().connected){
-              //   console.log('***********OFFLINE NOW,queue Method tasks.remove for later')
-              //  queueMethod('tasks.remove', messageObj.data._id)
-              // }
-              // else{
-              //   console.log('***********ONLINE NOW, will do remove to local now')
-                    
-              // }
-              // addToActionList(`🟡Completed- tasks.remove ${JSON.stringify(messageObj.data)}`)
-              // if (!Meteor.status().connected) {
-              //   console.log('************OFFLINE NOW,will queue taskRemote.remove')
-              //   queueMethod('tasksRemote.remove', messageObj.data.cnt)
-              // }
-              // else {
-                // console.log('************ONLINE NOW, will call taskRemote.remove')
-                //  addToActionList(`▶️Start- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
-                // await Meteor.callAsync('tasksRemote.remove', messageObj.data._id);
-                // addToActionList(`🟡Completed- tasksRemote.remove ${JSON.stringify(messageObj.data)}`)
-              // }
-              
-                // console.log('METEROR-FRONT: will call tasksExternal.remove ')
-                      //  addToActionList(`▶️Start- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
-                // await Meteor.callAsync('tasksExternal.remove', messageObj);
+            // Strict check: Ensure messageObj.data exists AND contains an _id
+            if (messageObj.data && messageObj.data._id) {
+              console.log('deleting task ID:', messageObj.data._id);
 
-        // addToActionList(`🟡Completed- tasksExternal.remove ${JSON.stringify(messageObj.data)}`)
-              console.log('Task deleted:', messageObj.data);
+              const targetId = messageObj.data._id;
+              const deleteArgs = [targetId];
+
+              // { noRetry: true } prevents this promise from hanging indefinitely while offline,
+              // allowing the code execution to smoothly fall through to your queue logic.
+              await Meteor.applyAsync('tasks.remove', [targetId], { noRetry: true });
+
+
+              // Check connection status to queue the replay mechanism
+              if (!Meteor.status().connected) {
+                console.log('***********OFFLINE NOW, queueing Method tasks.remove for later');
+
+                // Pass the plain targetId string cleanly to the queue
+                queueMethod('tasks.remove', targetId);
+              }else{
+                console.log('***********Nothing need to Queue')
+              }
+
+              console.log('Task deleted from local view:', messageObj.data);
             } else {
-              console.error('delete error');
+              console.error('Delete error: messageObj.data or _id property is missing.');
             }
             break;
           case "refresh":

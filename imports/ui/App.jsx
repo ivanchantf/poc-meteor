@@ -52,8 +52,13 @@ import { ListenerMessage, ActionList } from './shareStates'
 
 // })
 Tracker.autorun(() => {
+const userId = Meteor.userId();
+  const loggingIn = Meteor.loggingIn();
+  console.log('userID',userId)
+  console.log('loggingIn', loggingIn)
+
   const data = Tasks.find({}).fetch();
-  console.log('Collection updated, current count of Tasks:', data.length);
+  console.log('Meteor front -Tracker : use Collection updated, current count of Tasks:', data.length);
 
   // const isIframe = window.parent !== window;
   // if (isIframe) {
@@ -68,7 +73,7 @@ Tracker.autorun(() => {
   let iframe = document.getElementById("dse-front");
   if (iframe) {
     // Post message to iframe
-    console.log("postmessage refresh");
+    console.log("Meteor front: postmessage refresh");
     iframe?.contentWindow?.postMessage(
       JSON.stringify({
         type: 'refresh',
@@ -80,26 +85,38 @@ Tracker.autorun(() => {
       , '*');
   }
 });
+
+
+
 const OfflineQueue = Mongo.Collection.get('jam_offline_methods');
 export const App = () => {
   // const [tasks, setTasks] = useState([]);
 
-  const { queueCount, isConnected } = useTracker(() => {
-    const isDDPConnected = Meteor.status().connected;
-    const isBrowserOnline = navigator.onLine;
-    return {
-      // Use optional chaining just in case it's not initialized yet
-      queueCount: OfflineQueue?.find().count() || 0,
-      isConnected: isDDPConnected && isBrowserOnline,
-    };
-  }, []);
+  // const { queueCount, isConnected } = useTracker(() => {
+  //   const isDDPConnected = Meteor.status().connected;
+  //   const isBrowserOnline = navigator.onLine;
+  //   console.log('isDDP',isDDPConnected)
+  //   console.log('isBrowser', navigator.onLine)
+  //   return {
+  //     // Use optional chaining just in case it's not initialized yet
+  //     queueCount: OfflineQueue?.find().count() || 0,
+  //     isConnected: isDDPConnected && isBrowserOnline,
+  //   };
+  // }, []);
 
+  const { connected, status } = useTracker(() => Meteor.status());
+  useEffect(()=>{
+    console.log('connected changed', connected  )
+  },[connected])
+  useEffect(()=>{
+    console.log('status changed', status)
+  },[status])
   // Your logic to react when the app comes back online
-  useEffect(() => {
-    if (isConnected && queueCount > 0) {
-      console.log(`Syncing ${queueCount} items to the server...`);
-    }
-  }, [isConnected, queueCount]);
+  // useEffect(() => {
+  //   if (isConnected && queueCount > 0) {
+  //     console.log(`Syncing ${queueCount} items to the server...`);
+  //   }
+  // }, [isConnected, queueCount]);
 
 
   const [inputboxTaskText, setInputboxTaskText] = useState('');
@@ -224,22 +241,39 @@ export const App = () => {
   // if(isSyncing()){
   //   return(<p className='notice'>isSyncingDetail</p>)
   // }
-
+const syncing = useTracker(() => isSyncing(), []);
   return (
     <div >
       <div>
-      {queueCount > 0 ? (
+  {syncing && (
+    <div className="sync-overlay">
+      <div className="sync-content">
+        <p className="sync-spinner">🔄</p>
+        <p>Syncing changes made while offline...</p>
+      </div>
+    </div>
+  )}
+
+  {!syncing && (
+    <p className="sync-success">
+      ✅ All offline actions have been executed and synced!
+    </p>
+  )}
+</div>
+      <div>
+      {/* {queueCount > 0 ? (
         <div className="sync-status">🔄 Syncing {queueCount} pending tasks...</div>
-      ) : (
-        <div className="online-status">{isConnected ? '✅ Online' : 'Offline'}</div>
-      )}
+      ) : ( */}
+        <div className="online-status">{connected ? '✅ Online!' : 'Offline!'}</div>
+      {/* )} */}
     </div>
       <div style={{
         display: "flex", flexDirection: "column"
 
       }} >        
-      <div style={{ width: "100%", height: 1000 }}>
-          <iframe id="dse-front" src="http://10.0.2.2:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
+      {/* http://10.0.2.2:3010 http://localhost:3010*/}
+      <div style={{ width: "100%", height: 1000 }}>   
+          <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
         <div  className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
           <section style={{ marginTop: 20, border: '3px solid #00648bff', padding: 10, borderRadius: 5 }}>
@@ -300,7 +334,7 @@ export const App = () => {
           </section>
 
           <div>
-            <button onClick={() => test()} disabled>Test Button </button>
+            <button onClick={() => test()} >Test Button </button>
           </div>
 
         </div>

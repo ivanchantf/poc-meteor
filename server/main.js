@@ -15,7 +15,7 @@ export const TasksRemote = new Mongo.Collection("tasks_remote", {
 })
 import dns from 'dns';
 
-const hasInternet = () => {
+export const hasInternet = () => {
   return new Promise((resolve) => {
     // We resolve 'google.com' (or any stable domain)
     // lookup() checks if the machine can reach a DNS server

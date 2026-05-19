@@ -15,14 +15,17 @@ Meteor.methods({
 
         const taskId = await Tasks.insertAsync({ ...data, _id:uid,createdAt: new Date() });
         console.log('Task added with ID:', uid); // Add this line
-
+// CRITICAL FOR jam:offline: You must return the ID
+        return uid;
     },
     async 'tasks.update'(data) {
         if (!data._id || !data) {
             throw new Meteor.Error('Task _id and  data are required');
         }
+        console.log('tasks.update called with data:', data); // Add this line
         await Tasks.updateAsync({ _id: data._id },data)
         console.log('Task updated ID & data:', data._id, '  ', data); // Add this line
+        return data._id; // Return the ID of the updated task
     },
     async 'tasks.remove'(id) {
         if (!id) {
@@ -30,6 +33,8 @@ Meteor.methods({
         }
         await Tasks.removeAsync({ _id: id });
         console.log('Task removed ID :', id); // Add this line
+    // CRITICAL FOR jam:offline: Returning the id cleanly registers deletion sync completion
+            return id;
     },
     
     async 'tasks.read'(collectionName) {
