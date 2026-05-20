@@ -2,8 +2,15 @@
 import { Mongo } from 'meteor/mongo';
 import { Meteor } from "meteor/meteor";
 import { MongoInternals } from 'meteor/mongo';
+import '../../offline';
 export const Tasks = new Mongo.Collection('tasks');
-
+// Explicitly tell jam:offline to track this collection
+if (Tasks.keep) { 
+  Tasks.keep({
+    filter: {},      // Save everything that lands in the client's Minimongo
+    limit: 500,      // Default limit is 100 documents; raise it if needed
+  });
+}
 Meteor.methods({
     // /imports/api/methods.js
 

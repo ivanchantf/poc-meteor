@@ -9,7 +9,7 @@ import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';
 import { queueMethod } from 'meteor/jam:offline';
 import { ListenerMessage, ActionList } from './shareStates'
-
+import '../../offline';
 // import  './App.css';
 // Tracker.autorun(function (computation) {
 //   // Meteor.subscribe('tasks');
@@ -51,11 +51,14 @@ import { ListenerMessage, ActionList } from './shareStates'
 //   });
 
 // })
+
 Tracker.autorun(() => {
+  
 const userId = Meteor.userId();
   const loggingIn = Meteor.loggingIn();
   console.log('userID',userId)
   console.log('loggingIn', loggingIn)
+
 
   const data = Tasks.find({}).fetch();
   console.log('Meteor front -Tracker : use Collection updated, current count of Tasks:', data.length);
@@ -125,28 +128,46 @@ export const App = () => {
 
   const msg = useTracker(() => ListenerMessage.get());
   const actionList = useTracker(() => ActionList.get());
-  useEffect(() => {
-    console.log('Entering fetch Data')
-    let fetchData = async () => {
-      console.log('fetching data')
-      let read = await Meteor.callAsync('tasks.read');
-      console.log('remoteR')
-      console.log(read)
+  // useEffect(() => {
+  //   console.log('Entering fetch Data')
+  //   let fetchData = async () => {
+  //     console.log('fetching data')
+  //     let read = await Meteor.callAsync('tasks.read');
+  //     console.log('remoteR')
+  //     console.log(read)
 
-      // if (!Meteor.status().connected) { // check that the user is offline
-      //     console.log('=========METE-FRONT:OFFLINE NOW,will queue taskRemote.read')
-      //     queueMethod('tasksRemote.read') // the arguments should be the same form that you'd use for Meteor.callAsync
-      // }
-      // else{
-      // console.log('=========METE-FRONT:ONLINE NOW, will call taskRemote.read')
-      let remoteRead = await Meteor.callAsync('tasksRemote.read');
-      //     console.log('remoteR')
-      //     console.log(remoteRead)
-      // }
-    };
-    //  fetchData()
+  //     // if (!Meteor.status().connected) { // check that the user is offline
+  //     //     console.log('=========METE-FRONT:OFFLINE NOW,will queue taskRemote.read')
+  //     //     queueMethod('tasksRemote.read') // the arguments should be the same form that you'd use for Meteor.callAsync
+  //     // }
+  //     // else{
+  //     // console.log('=========METE-FRONT:ONLINE NOW, will call taskRemote.read')
+  //     let remoteRead = await Meteor.callAsync('tasksRemote.read');
+  //     //     console.log('remoteR')
+  //     //     console.log(remoteRead)
+  //     // }
+  //   };
+  //   //  fetchData()
 
-  }, [])
+  // }, [])
+  useEffect(()=>{
+  const data = Tasks.find({}).fetch();
+  console.log('Meteor front - useEffect : use Collection updated, current count of Tasks:', data.length);
+    let iframe = document.getElementById("dse-front");
+  if (iframe) {
+    // Post message to iframe
+    console.log("Meteor front: postmessage refresh");
+    iframe?.contentWindow?.postMessage(
+      JSON.stringify({
+        type: 'refresh',
+        // collection:'tasks',
+        path: 'http://abc:404/api/get-all',
+        httpType: 'GET',
+        data: data
+      })
+      , '*');
+  }
+},[])
   let tasks = useTracker(() => { return Tasks.find({}).fetch() })
 
   const generateUniqueId = () => {
