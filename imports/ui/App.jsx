@@ -105,17 +105,12 @@ export const App = () => {
           </div>
         )}
 
-        {!syncing && hasSettled && (
-          <p className="sync-success">
-            ✅ All offline actions have been executed and synced!
-          </p>
-        )}
       </div>
       <div>
         {/* {queueCount > 0 ? (
         <div className="sync-status">🔄 Syncing {queueCount} pending tasks...</div>
       ) : ( */}
-        <div className="online-status">{connected ? '✅ Online!' : 'Offline!'}</div>
+        <div className="online-status">Meteor.status().connected:<span className='online-status-indicator'> {connected ? '✅ Online' : '❌Offline'}</span></div>
         {/* )} */}
       </div>
       <div style={{

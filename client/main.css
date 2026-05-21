@@ -126,3 +126,12 @@ h1{
   font-weight: bold;
   padding: 1rem;
 }
+.online-status{
+  font-weight: bold;
+  color: gray;
+}
+.online-status-indicator{
+  font-size: larger;
+  color: black;
+}
+
