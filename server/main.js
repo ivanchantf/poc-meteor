@@ -2,7 +2,7 @@ import { Meteor } from 'meteor/meteor';
 
  import { Tasks } from '../imports/api/tasks';
 import '../imports/api/tasksPublications';
-import '../imports/api/methods';
+
 import dotenv from 'dotenv';
 import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';

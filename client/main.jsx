@@ -3,16 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { Meteor } from 'meteor/meteor';
 import { App } from '/imports/ui/App';
 import { Tasks } from '../imports/api/tasks';
-
-import '../imports/api/methods';
 import { Tracker } from "meteor/tracker";
 import { queueMethod } from 'meteor/jam:offline';
 import '../imports/api/offline';
 import _ from 'lodash';
-import { ListenerMessage,ActionList,addToActionList } from '../imports/ui/shareStates';
-import { Offline } from 'meteor/jam:offline';
 
-const injectUserID=()=>{
+
+const injectUserID = () => {
   const FAKE_USER_ID = 'fake-user-12345';
   const FAKE_USER_OBJECT = {
     _id: FAKE_USER_ID,
@@ -32,7 +29,7 @@ const injectUserID=()=>{
 
   Meteor.user = () => {
     userIdDep.depend();
-    return FAKE_USER_OBJECT ;
+    return FAKE_USER_OBJECT;
   };
 
   Meteor.loggingIn = () => {
@@ -44,22 +41,19 @@ const injectUserID=()=>{
     userIdDep.changed();
   });
 
-  console.log("🛠️ Dev Mode: Injected reactive fake user session:", FAKE_USER_ID);
+  console.log(" Injected reactive fake user session:", FAKE_USER_ID);
 }
-Meteor.startup(async () => 
-  {
+Meteor.startup(async () => {
 
-   injectUserID()
-
-    
+  injectUserID()
   document.addEventListener('deviceready', function () {
-      // cordova.plugins.backgroundMode is now available
-      console.log('Device is ready, cordova.plugins.backgroundMode is available');
-      cordova.plugins.backgroundMode.setEnabled(true);
-      // setInterval(()=>{
-      // cordova.plugins.backgroundMode.isActive()?console.log('Background mode is active') : console.log('Background mode is not active');
+    // cordova.plugins.backgroundMode is now available
+    console.log('Device is ready, cordova.plugins.backgroundMode is available');
+    cordova.plugins.backgroundMode.setEnabled(true);
+    // setInterval(()=>{
+    // cordova.plugins.backgroundMode.isActive()?console.log('Background mode is active') : console.log('Background mode is not active');
 
-      // },5000)
+    // },5000)
 
   }, false);
   console.log('Meteor client started');
@@ -73,48 +67,26 @@ Meteor.startup(async () =>
     });
   };
 
-   try {
-     await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
+  try {
+    await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
     const container = document.getElementById('react-target'); //react-target is the id of the div in main.html where we want to render our React app
-   const handle = Meteor.subscribe('tasks');
+    const handle = Meteor.subscribe('tasks');
 
-  if (handle.ready()) {
-    console.log("Subscription ready. Check IndexedDB now!");
-  }
-
-
-    console.log('add event listener for message from service worker');
-
-    // const sameListsContent=(list1, list2) => {
-    //   if (list1.length !== list2.length) {
-    //     return false;
-    //   }
-    //   const cleanedData1 = list1.map(({ _id, createdAt, cnt, ...rest }) => rest);
-    //   const cleanedData2 = list2.map(({ _id, createdAt, cnt, ...rest }) => rest);
-    //   console.log('Comparing cleaned data (without _id, createdAt, cnt):');
-    //   console.log('Cleaned Data 1:', cleanedData1);
-    //   console.log('Cleaned Data 2:', cleanedData2);
-    //   return JSON.stringify(cleanedData1) === JSON.stringify(cleanedData2);
-    // }
+    if (handle.ready()) {
+      console.log("Subscription ready. Check IndexedDB now!");
+    }
 
     window.addEventListener('message', async message => {
       try {
-        console.log('METEROR-FRONT: Received message from service worker:', message.data);
-        
+        if(['meteor-data-performance','ddp-event','minimongo-get-collections'].includes(message.data.eventType)){          return        }
+        if(typeof(message.data)==='string'&& message.data.startsWith('Meteor._setImmediate')){return}
         let m = "";
-
+        console.log('🔴METEROR-FRONT: Received message from pwa:\n'+message.data);
         let messageObj = JSON.parse(message.data)
-        if(messageObj.type){
-          ListenerMessage.set(message.data)
-        }
-        
-        console.log('METEROR-FRONT: \n*********************************************************************\nParsed message object from service worker:\n****************************************\n');
-        console.log(messageObj)
-
         switch (messageObj.type) {
           case "save":
             if (messageObj.data) {
-              console.log('METEROR-FRONT: TYPE-SAVE Received message from service worker:', messageObj.data.text);
+              console.log('METEROR-FRONT: TYPE-SAVE Received message from pwa:', messageObj.data.text);
 
               const generateUniqueId = () => {
                 let generateRandomString = (length) => {
@@ -129,45 +101,15 @@ Meteor.startup(async () =>
               }
 
               let uid = generateUniqueId()
-              // addToActionList(`▶️Start - 'tasks.insert'${JSON.stringify(messageObj.data)} `)
 
-
-
-             await Meteor.applyAsync('tasks.insert', [{ text: messageObj.data.text }, uid], { noRetry: true }
-              ,(err,res)=>{if(err){console.log('method failed',err)}});
+              await Meteor.applyAsync('tasks.insert', [{ text: messageObj.data.text }, uid], { noRetry: true }
+                , (err, res) => { if (err) { console.log('method failed', err) } });
               console.log('Meteor.status().connected:', Meteor.status().connected)
-              if(!Meteor.status().connected){
+              if (!Meteor.status().connected) {
                 console.log('***********OFFLINE NOW,queue Method tasks.insert for later')
-               queueMethod('tasks.insert',{ text: messageObj.data.text }, uid)
+                queueMethod('tasks.insert', { text: messageObj.data.text }, uid)
               }
-              // else{
-              //   console.log('***********ONLINE NOW, will do insert to local now')
-              //   await Meteor.callAsync('tasks.insert', messageObj.data, uid);
-              // }
 
-              // await Meteor.callAsync('tasks.insert', messageObj.data, uid);
-              // addToActionList(`🟡Completed- 'tasks.insert' ${JSON.stringify(messageObj.data)}`)
-
-
-
-           
-              // if (!Meteor.status().connected) {
-              //   console.log('***********OFFLINE NOW,will do insert when go back online')
-              //   queueMethod('tasksRemote.insert', messageObj.data.text, uid)
-              // }
-              // else {
-                // console.log('***********ONLINE NOW, will do insert to remote now')
-                   
-                // console.log('METEROR-FRONT: will call tasksRemote.insert for save')
-                // addToActionList(`▶️Start - 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
-                // await Meteor.callAsync('tasksRemote.insert', messageObj.data, uid);
-                // addToActionList(`🟡Completed- 'tasksRemote.insert' ${JSON.stringify(messageObj.data)}`)
-
-                // addToActionList(`▶️Start - 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
-                // console.log('METEROR-FRONT: will call tasksExternal.insert for save')
-                // await Meteor.callAsync('tasksExternal.insert', messageObj);
-                // addToActionList(`🟡Completed- 'tasksExternal.insert' ${JSON.stringify(messageObj.data)}`)
-              // }
 
               console.log('Task saved:', messageObj.data);
             } else {
@@ -177,43 +119,16 @@ Meteor.startup(async () =>
           case "update":
             if (messageObj.data) {
               console.log('updating')
-              //  addToActionList(`▶️Start - tasks.update  ${JSON.stringify(messageObj.data)}`)
-              
               const updateArgs = [messageObj.data];
 
-// Optimistically update local cache
-await Meteor.applyAsync('tasks.update', updateArgs, { noRetry: true });
+              // Optimistically update local cache
+              await Meteor.applyAsync('tasks.update', updateArgs, { noRetry: true });
 
-if (!Meteor.status().connected) {
-    // Spread the arguments array so jam:offline handles the data parameter perfectly
-    queueMethod('tasks.update', ...updateArgs); 
-}
-              // if(!Meteor.status().connected){
-              //   console.log('***********OFFLINE NOW,queue Method update for later')
-              //  queueMethod('tasks.update', messageObj.data)
-              // }
-              // else{
-              //   console.log('***********ONLINE NOW, will do update to local now')
-               
-              // }
-              //  addToActionList(`🟡Completed- tasks.update ${JSON.stringify(messageObj.data)}`)
+              if (!Meteor.status().connected) {
+                // Spread the arguments array so jam:offline handles the data parameter perfectly
+                queueMethod('tasks.update', ...updateArgs);
+              }
 
-
-              // if (!Meteor.status().connected) {
-              //   console.log('************OFFLINE NOW,will queue taskRemote.update')
-              //   queueMethod('tasksRemote.update', messageObj.data.cnt, messageObj.data.text)
-              // }
-              // else {
-              //   console.log('************ONLINE NOW, will call taskRemote.update')
-              //  addToActionList(`▶️Start - tasksRemote.update ${JSON.stringify(messageObj.data)}`)
-                // await Meteor.callAsync('tasksRemote.update', messageObj.data);
-              // }
-              //  addToActionList(`🟡Completed- tasksRemote.update ${JSON.stringify(messageObj.data)}`)
-
-                // console.log('METEROR-FRONT: will call tasksExternal.update ')
-                // addToActionList(`▶️Start - tasksExternal.update ${JSON.stringify(messageObj.data)}`)
-                // await Meteor.callAsync('tasksExternal.update', messageObj);
-    // addToActionList(`🟡Completed- tasksExternal.update ${JSON.stringify(messageObj.data)}`)
 
               console.log('Task updated:', messageObj.data);
             } else {
@@ -239,7 +154,7 @@ if (!Meteor.status().connected) {
 
                 // Pass the plain targetId string cleanly to the queue
                 queueMethod('tasks.remove', targetId);
-              }else{
+              } else {
                 console.log('***********Nothing need to Queue')
               }
 
@@ -251,61 +166,26 @@ if (!Meteor.status().connected) {
           case "refresh":
             // console.log(tasks)
             console.log(messageObj.collection)
-            console.log(`METEOR-FRONT: Received refresh message from service worker, will fetch latest tasks and send back to pwa`)
-            // const sub = await subscribeAndWait('tasks')
-            // console.log(sub.ready())
-                    // addToActionList(`▶️Start- tasks.read `)
+            console.log(`METEOR-FRONT:  will fetch latest tasks `)
+
             liRecords = await Meteor.callAsync('tasks.read');
-            // addToActionList(`🟡Completed- tasks.read `)
-            // .forEach((msg) => {
-            //       liRecords += JSON.stringify(msg) + "\n";
 
-            // });
-            console.log('Fetched latest tasks from Meteor local collection:')
+            console.log('METEOR-FRONT: Fetched latest tasks from Meteor local collection:')
             console.log(liRecords)
-            console.log('Sending liRecords from meteor to pwa')
-            let iframe= document.getElementById("dse-front");
-            if(iframe){
-              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-front', 'data': liRecords }),'*');
+            console.log('🟥METEOR-FRONT:Sending liRecords from meteor to pwa')
+            let iframe = document.getElementById("dse-front");
+            if (iframe) {
+              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh', 'from': 'meteor-front', 'data': liRecords }), '*');
 
-              //ONLINE PART
-              // addToActionList(`▶️Start- tasksRemote.read `)
-              // const remoteData = await Meteor.callAsync('tasksRemote.read');
-                // addToActionList(`🟡Completed- tasksRemote.read `)
-                // console.log('remote collection data fetched from meteor server:') 
-                // console.log(remoteData)
-              // if (!sameListsContent(liRecords, remoteData)) {
-              //   console.warn('Data mismatch between local and remote, sending remote data to pwa for refresh')
-                // iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }),'*');
+            }
 
-                  // addToActionList(`▶️Start- tasksExternal.read `)
-                // const retrievedData= await Meteor.callAsync('tasksExternal.read', messageObj.collection);
-                  // addToActionList(`🟡Completed- tasksExternal.read `)
-                // console.log('Data fetched from pwa-backend via Meteor method:', retrievedData);
-
-                // if(retrievedData){
-                  // iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh','from':'pwa-backend', 'data': retrievedData }), '*');
-                // }
-                // else{
-                  // console.warn('No data retrieved from pwa-backend, NOT sending remote data from  pwa-backend to pwa for refresh')
-                // }
-              }
-              // }
-            // else{
-            //   console.log('✅Data is consistent between local and remote, no need to further call pwa-backend')
-            //   window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh','from':'meteor-back', 'data': remoteData }), "*");
-            //   window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh','from':'pwa-backend', 'data': remoteData }), "*");
-            // }
             break;
 
           default:
             console.log('Unknown message type');
         }
 
-        // Tasks.find().forEach((msg) => {
-        //   m += JSON.stringify(msg) + "\n";
-        // });
-        // console.log(m);
+
         return m;
       }
       catch { (err) => { console.log(err) } }
@@ -315,7 +195,7 @@ if (!Meteor.status().connected) {
     const root = createRoot(container);
     root.render(<App />);
   }
-   catch (error) {
+  catch (error) {
     console.error('Service Worker registration failed:', error);
   }
 });
