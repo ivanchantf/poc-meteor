@@ -12,10 +12,10 @@ import { ListenerMessage, ActionList } from './shareStates'
 import { Offline } from 'meteor/jam:offline';
 
 Tracker.autorun(() => {
-  
-const userId = Meteor.userId();
+
+  const userId = Meteor.userId();
   const loggingIn = Meteor.loggingIn();
-  console.log('userID',userId)
+  console.log('userID', userId)
   console.log('loggingIn', loggingIn)
 
 
@@ -32,20 +32,20 @@ const userId = Meteor.userId();
   //   }, "*"); 
   // }
 
-  let iframe = document.getElementById("dse-front");
-  if (iframe) {
-    // Post message to iframe
-    console.log("Meteor front: postmessage refresh");
-    iframe?.contentWindow?.postMessage(
-      JSON.stringify({
-        type: 'refresh',
-        // collection:'tasks',
-        path: 'http://abc:404/api/get-all',
-        httpType: 'GET',
-        data: data
-      })
-      , '*');
-  }
+  // let iframe = document.getElementById("dse-front");
+  // if (iframe) {
+  //   // Post message to iframe
+  //   console.log("Meteor front: postmessage refresh");
+  //   iframe?.contentWindow?.postMessage(
+  //     JSON.stringify({
+  //       type: 'refresh',
+  //       // collection:'tasks',
+  //       path: 'http://abc:404/api/get-all',
+  //       httpType: 'GET',
+  //       data: data
+  //     })
+  //     , '*');
+  // }
 });
 
 
@@ -67,34 +67,27 @@ export const App = () => {
   // }, []);
 
   const { connected, status } = useTracker(() => Meteor.status());
-  useEffect(()=>{
-    console.log('connected changed', connected  )
-  },[connected])
-  useEffect(()=>{
+  useEffect(() => {
+    console.log('connected changed', connected)
+  }, [connected])
+  useEffect(() => {
     console.log('status changed', status)
-  },[status])
-  // Your logic to react when the app comes back online
-  // useEffect(() => {
-  //   if (isConnected && queueCount > 0) {
-  //     console.log(`Syncing ${queueCount} items to the server...`);
-  //   }
-  // }, [isConnected, queueCount]);
-
+  }, [status])
 
   const [inputboxTaskText, setInputboxTaskText] = useState('');
   const [currentTaskCntId, setCurrentTaskCntId] = useState('');
   // Replace your isolated useSubscribe and useTracker lines with this:
-const { tasks, isLoading } = useTracker(() => {
-  const handle = Meteor.subscribe('tasks');
-  return {
-    isLoading: !handle.ready(),
-    tasks: Tasks.find({}).fetch(),
-  };
-}, []);
+  const { tasks, isLoading } = useTracker(() => {
+    const handle = Meteor.subscribe('tasks');
+    return {
+      isLoading: !handle.ready(),
+      tasks: Tasks.find({}).fetch(),
+    };
+  }, []);
 
 
 
-const [hasSettled, setHasSettled] = useState(false);
+  const [hasSettled, setHasSettled] = useState(false);
 
   // 1. Grab your data reactively
   const { userId, loggingIn, data } = useTracker(() => {
@@ -125,7 +118,7 @@ const [hasSettled, setHasSettled] = useState(false);
     console.log('userID', userId);
     console.log('Meteor front - Data settled. Current count of Tasks:', data.length);
 
-    const iframe = document.getElementById("dse-front") 
+    const iframe = document.getElementById("dse-front")
     if (iframe && iframe.contentWindow) {
       console.log("Meteor front: postmessage refresh sending data...");
       iframe.contentWindow.postMessage(
@@ -134,7 +127,7 @@ const [hasSettled, setHasSettled] = useState(false);
           path: 'http://abc:404/api/get-all',
           httpType: 'GET',
           data: data
-        }), 
+        }),
         '*'
       );
     }
@@ -233,42 +226,42 @@ const [hasSettled, setHasSettled] = useState(false);
   // if(isSyncing()){
   //   return(<p className='notice'>isSyncingDetail</p>)
   // }
-const syncing = useTracker(() => isSyncing(), []);
+  const syncing = useTracker(() => isSyncing(), []);
   return (
     <div >
       <div>
-  {syncing && (
-    <div className="sync-overlay">
-      <div className="sync-content">
-        <p className="sync-spinner">🔄</p>
-        <p>Syncing changes made while offline...</p>
-      </div>
-    </div>
-  )}
+        {(syncing||!hasSettled) && (
+          <div className={`sync-overlay`}>
+            <div className={`sync-content`}>
+              <p className="sync-spinner">🔄</p>
+              <p>Syncing changes made while offline...</p>
+            </div>
+          </div>
+        )}
 
-  {!syncing && (
-    <p className="sync-success">
-      ✅ All offline actions have been executed and synced!
-    </p>
-  )}
-</div>
+        {!syncing && hasSettled && (
+          <p className="sync-success">
+            ✅ All offline actions have been executed and synced!
+          </p>
+        )}
+      </div>
       <div>
-      {/* {queueCount > 0 ? (
+        {/* {queueCount > 0 ? (
         <div className="sync-status">🔄 Syncing {queueCount} pending tasks...</div>
       ) : ( */}
         <div className="online-status">{connected ? '✅ Online!' : 'Offline!'}</div>
-      {/* )} */}
-    </div>
+        {/* )} */}
+      </div>
       <div style={{
         display: "flex", flexDirection: "column"
 
-      }} >        
-      {/* http://10.0.2.2:3010 http://localhost:3010*/}
-      <div style={{ width: "100%", height: 1000 }}>   
+      }} >
+        {/* http://10.0.2.2:3010 http://localhost:3010*/}
+        <div style={{ width: "100%", height: 1000 }}>
           <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
-        <div  className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
-      
+        <div className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
+
           <div style={{ display: "flex", flexDirection: "column" }}>
 
 
@@ -292,7 +285,7 @@ const syncing = useTracker(() => isSyncing(), []);
 
                 <li key={task._id + Math.random()} className='list-item'>
                   <p className='item-id'>{task.cnt}</p>
-                  <div   style={{ width: "10px"}}>
+                  <div style={{ width: "10px" }}>
                     {task.text}</div>
 
                   <div>
