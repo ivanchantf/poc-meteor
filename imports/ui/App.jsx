@@ -9,48 +9,7 @@ import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';
 import { queueMethod } from 'meteor/jam:offline';
 import { ListenerMessage, ActionList } from './shareStates'
-import '../../offline';
-// import  './App.css';
-// Tracker.autorun(function (computation) {
-//   // Meteor.subscribe('tasks');
-//   // Get the cursor for the collection
-//   const cursor = Tasks.find({});
-
-//   console.log('changed cursor')
-//   console.log(cursor)
-//   // Observe changes to the cursor
-
-//   const handle = cursor.observeChanges({
-//     // added: function (id, fields) {
-//     //   console.log('Document added:', id, fields);
-//     //   // Run your custom logic here
-//     // },
-//     changed: function (id, fields) {
-//       console.log('Document changed:', id, fields);
-//       console.log('Sending liRecords from meteor to pwa')
-//       console.log(window.parent.parent.location !== window.location )
-//       console.log(window.parent.parent.location)
-//       console.log(window.location)
-//       if(window.parent.parent.location !== window.location){
-//           console.log('Sending liRecords from meteor to pwa')
-//          window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh', 'data': cursor.fetch()}), "*");
-//       }
-
-//     },
-//     removed: function (id) {
-//       console.log('Document removed:', id);
-//       console.log('Sending liRecords from meteor to pwa')
-//       if(window.parent.parent.location !== window.location){
-//          window.parent.parent.postMessage(JSON.stringify({ 'type': 'refresh', 'data':cursor.fetch() }), "*");
-//       }
-//     }
-//   });
-// // Stop the observer when the computation invalidates/re-runs
-//   computation.onInvalidate(() => {
-//     handle.stop();
-//   });
-
-// })
+import { Offline } from 'meteor/jam:offline';
 
 Tracker.autorun(() => {
   
@@ -124,51 +83,63 @@ export const App = () => {
 
   const [inputboxTaskText, setInputboxTaskText] = useState('');
   const [currentTaskCntId, setCurrentTaskCntId] = useState('');
-  const isLoading = useSubscribe("tasks");
+  // Replace your isolated useSubscribe and useTracker lines with this:
+const { tasks, isLoading } = useTracker(() => {
+  const handle = Meteor.subscribe('tasks');
+  return {
+    isLoading: !handle.ready(),
+    tasks: Tasks.find({}).fetch(),
+  };
+}, []);
 
-  const msg = useTracker(() => ListenerMessage.get());
-  const actionList = useTracker(() => ActionList.get());
-  // useEffect(() => {
-  //   console.log('Entering fetch Data')
-  //   let fetchData = async () => {
-  //     console.log('fetching data')
-  //     let read = await Meteor.callAsync('tasks.read');
-  //     console.log('remoteR')
-  //     console.log(read)
 
-  //     // if (!Meteor.status().connected) { // check that the user is offline
-  //     //     console.log('=========METE-FRONT:OFFLINE NOW,will queue taskRemote.read')
-  //     //     queueMethod('tasksRemote.read') // the arguments should be the same form that you'd use for Meteor.callAsync
-  //     // }
-  //     // else{
-  //     // console.log('=========METE-FRONT:ONLINE NOW, will call taskRemote.read')
-  //     let remoteRead = await Meteor.callAsync('tasksRemote.read');
-  //     //     console.log('remoteR')
-  //     //     console.log(remoteRead)
-  //     // }
-  //   };
-  //   //  fetchData()
 
-  // }, [])
-  useEffect(()=>{
-  const data = Tasks.find({}).fetch();
-  console.log('Meteor front - useEffect : use Collection updated, current count of Tasks:', data.length);
-    let iframe = document.getElementById("dse-front");
-  if (iframe) {
-    // Post message to iframe
-    console.log("Meteor front: postmessage refresh");
-    iframe?.contentWindow?.postMessage(
-      JSON.stringify({
-        type: 'refresh',
-        // collection:'tasks',
-        path: 'http://abc:404/api/get-all',
-        httpType: 'GET',
-        data: data
-      })
-      , '*');
-  }
-},[])
-  let tasks = useTracker(() => { return Tasks.find({}).fetch() })
+const [hasSettled, setHasSettled] = useState(false);
+
+  // 1. Grab your data reactively
+  const { userId, loggingIn, data } = useTracker(() => {
+    return {
+      userId: Meteor.userId(),
+      loggingIn: Meteor.loggingIn(),
+      data: Tasks.find({}).fetch(),
+    };
+  });
+
+  // 2. Wait for Minimongo to populate from IndexedDB
+  useEffect(() => {
+    if (data.length > 0) {
+      setHasSettled(true);
+    } else {
+      // If the database is completely empty naturally, give IndexedDB 
+      // 300ms to safely confirm there are 0 items before giving up.
+      const timer = setTimeout(() => setHasSettled(true), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [data.length]);
+
+  // 3. Handle your iframe postMessage side-effects
+  useEffect(() => {
+    // Stop if we are still logging in, or if Minimongo hasn't settled its data load
+    if (loggingIn || !hasSettled) return;
+
+    console.log('userID', userId);
+    console.log('Meteor front - Data settled. Current count of Tasks:', data.length);
+
+    const iframe = document.getElementById("dse-front") 
+    if (iframe && iframe.contentWindow) {
+      console.log("Meteor front: postmessage refresh sending data...");
+      iframe.contentWindow.postMessage(
+        JSON.stringify({
+          type: 'refresh',
+          path: 'http://abc:404/api/get-all',
+          httpType: 'GET',
+          data: data
+        }), 
+        '*'
+      );
+    }
+  }, [data, userId, loggingIn, hasSettled]);
+
 
   const generateUniqueId = () => {
     let generateRandomString = (length) => {
@@ -297,43 +268,24 @@ const syncing = useTracker(() => isSyncing(), []);
           <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
         <div  className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
-          <section style={{ marginTop: 20, border: '3px solid #00648bff', padding: 10, borderRadius: 5 }}>
-            <div style={{ display: "flex", flexDirection: "column" }}><button style={{ width: "50%", margin: '3px' }} onClick={() => ActionList.set([])}>Clear Log</button>
-              <div className="terminal-container">
-                <ul className="terminal-list">
-                  {actionList.map((action, index) => (
-                    <li key={index}>{action}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </section>
+      
           <div style={{ display: "flex", flexDirection: "column" }}>
 
-            {msg &&
-              <section style={{ border: '4px solid black', width: "100%", }}>
-                <h2>RECEIVED:</h2>
-                <div style={{ padding: '20px', backgroundColor: '#282c34', color: '#abb2bf', borderRadius: '8px' }}>
-                  <pre style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>
-                    {JSON.stringify(JSON.parse(msg), null, 2)}
-                  </pre>
-                </div>
-              </section>}
 
 
           </div>
           <section style={{ width: "100%", border: '5px solid #00648bff' }} id='minimongo-section'>
-            <h2>List of records - [minimongo]</h2>
-            <input
+            <h2>List of records in minimongo</h2>
+            {/* <input
               type="text"
               style={{ width: "10px"}}
               value={inputboxTaskText}
               onChange={(e) => setInputboxTaskText(e.target.value)}
               disabled
-            />
-            <button onClick={currentTaskCntId ? () => handleUpdateTask(currentTaskCntId, inputboxTaskText) : handleAddTask} disabled>
+            /> */}
+            {/* <button onClick={currentTaskCntId ? () => handleUpdateTask(currentTaskCntId, inputboxTaskText) : handleAddTask} disabled>
               {currentTaskCntId ? 'Update Task' : 'Add Task'}
-            </button>
+            </button> */}
 
             <ul style={{ fontSize: '5px', padding: 0, marginTop: 20 }}>
               {tasks.map((task) => (
@@ -344,8 +296,8 @@ const syncing = useTracker(() => isSyncing(), []);
                     {task.text}</div>
 
                   <div>
-                    <button onClick={() => handleTaskEdit(task)} disabled>Edit</button>
-                    <button onClick={() => handleDeleteTask(task.cnt)} disabled>Delete</button>
+                    {/* <button onClick={() => handleTaskEdit(task)} disabled>Edit</button>
+                    <button onClick={() => handleDeleteTask(task.cnt)} disabled>Delete</button> */}
 
                   </div>
                 </li>
@@ -355,7 +307,7 @@ const syncing = useTracker(() => isSyncing(), []);
           </section>
 
           <div>
-            <button onClick={() => test()} >Test Button </button>
+            {/* <button onClick={() => test()} >Test Button </button> */}
           </div>
 
         </div>

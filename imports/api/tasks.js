@@ -2,15 +2,10 @@
 import { Mongo } from 'meteor/mongo';
 import { Meteor } from "meteor/meteor";
 import { MongoInternals } from 'meteor/mongo';
-import '../../offline';
+import './offline';
 export const Tasks = new Mongo.Collection('tasks');
 // Explicitly tell jam:offline to track this collection
-if (Tasks.keep) { 
-  Tasks.keep({
-    filter: {},      // Save everything that lands in the client's Minimongo
-    limit: 500,      // Default limit is 100 documents; raise it if needed
-  });
-}
+Tasks.keep()
 Meteor.methods({
     // /imports/api/methods.js
 
@@ -21,9 +16,9 @@ Meteor.methods({
         }
 
         const taskId = await Tasks.insertAsync({ ...data, _id:uid,createdAt: new Date() });
-        console.log('Task added with ID:', uid); // Add this line
+        console.log('Task added with ID:', taskId ); // Add this line
 // CRITICAL FOR jam:offline: You must return the ID
-        return uid;
+        return taskId ;
     },
     async 'tasks.update'(data) {
         if (!data._id || !data) {
@@ -61,6 +56,7 @@ Meteor.methods({
         //     console.log(`Creating new collection instance for ${collectionName}`)
         //     collectionInstance = new Mongo.Collection(collectionName);
         // }
-        return Tasks.find({}).fetch()
+
+            return Tasks.find({}).fetch();
     }
 });

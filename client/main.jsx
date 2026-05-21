@@ -7,7 +7,7 @@ import { Tasks } from '../imports/api/tasks';
 import '../imports/api/methods';
 import { Tracker } from "meteor/tracker";
 import { queueMethod } from 'meteor/jam:offline';
-import '../offline';
+import '../imports/api/offline';
 import _ from 'lodash';
 import { ListenerMessage,ActionList,addToActionList } from '../imports/ui/shareStates';
 import { Offline } from 'meteor/jam:offline';
@@ -76,17 +76,11 @@ Meteor.startup(async () =>
    try {
      await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
     const container = document.getElementById('react-target'); //react-target is the id of the div in main.html where we want to render our React app
-    Tracker.autorun((com)=>{
-      const sub= Meteor.subscribe("tasks")
-      if(sub.ready){
+   const handle = Meteor.subscribe('tasks');
 
-         Tasks.find({}).fetch().forEach((msg) => {
-                  liRecords += JSON.stringify(msg) + "\n";
-
-                });
-         //console.log(liRecords)
-      }
-    })
+  if (handle.ready()) {
+    console.log("Subscription ready. Check IndexedDB now!");
+  }
 
 
     console.log('add event listener for message from service worker');

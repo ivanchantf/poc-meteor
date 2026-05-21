@@ -4,7 +4,7 @@ import { Meteor } from 'meteor/meteor';
 import '../imports/api/tasksPublications';
 import '../imports/api/methods';
 import dotenv from 'dotenv';
-import '../offline';
+import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import fs from 'fs';
 import path from 'path';
