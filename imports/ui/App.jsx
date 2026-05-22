@@ -121,15 +121,15 @@ export const App = () => {
         <div style={{ width: "100%", height: 1000 }}>
           <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
-        <div className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', backgroundColor: 'gray', padding: '2px' }}>
+        <div className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', border: '12px solid black', backgroundColor: '#bbbbbbff', padding: '2px', margin: '4px' }}>
 
           <div style={{ display: "flex", flexDirection: "column" }}>
 
 
 
           </div>
-          <section style={{ width: "100%", border: '5px solid #00648bff' }} id='minimongo-section'>
-            <h2>List of records in minimongo</h2>
+          <section style={{ width: "100%"}} id='minimongo-section'>
+            <h2>List of records in minimongoo</h2>
 
             <ul style={{ fontSize: '5px', padding: 0, marginTop: 20 }}>
               {tasks.map((task) => (

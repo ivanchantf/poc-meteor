@@ -5,8 +5,5 @@ Offline.configure({
   autoSync: true,
   filter: {}, 
   limit: 200,
-   handleSyncErrors: async ({ replayErrors }) => {
-    if (replayErrors) console.error('Sync Rejection:', replayErrors);
-  },
   keepAll: true // Ensures all collections are saved by default
 });
