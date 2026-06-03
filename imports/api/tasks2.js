@@ -3,34 +3,33 @@ import { Mongo } from 'meteor/mongo';
 import { Meteor } from "meteor/meteor";
 import { MongoInternals } from 'meteor/mongo';
 import './offline';
-export const Tasks = new Mongo.Collection('tasks');
+export const Tasks2 = new Mongo.Collection('tasks2');
 // Explicitly tell jam:offline to track this collection
-Tasks.keep()
+Tasks2.keep()
 Meteor.methods({
-    async 'tasks.insert'(data,deviceId) {
-        console.log('tasks.insert method called with data:', data, 'and deviceId:', deviceId);
+    async 'tasks2.insert'(data) {
         if (!data ) {
             throw new Meteor.Error('Task data is required');
         }
-        const taskId = await Tasks.insertAsync({ ...data, deviceId:deviceId });//, _id:uid
+        const taskId = await Tasks2.insertAsync({ ...data });//, _id:uid
         return taskId ;// CRITICAL FOR jam:offline:  must return the ID
     },
-    async 'tasks.update'(data,deviceId) {
+    async 'tasks2.update'(data) {
         if (!data._id || !data) {
             throw new Meteor.Error('Task _id and  data are required');
         }
-        await Tasks.updateAsync({ _id: data._id },{...data, deviceId:deviceId})
+        await Tasks2.updateAsync({ _id: data._id },data)
         return data._id; // Return the ID of the updated task
     },
-    async 'tasks.remove'(id,deviceId) {
+    async 'tasks2.remove'(id) {
         if (!id) {
             throw new Meteor.Error('Task id is required');
         }
-        await Tasks.removeAsync({ _id: id, deviceId:deviceId });
+        await Tasks2.removeAsync({ _id: id });
             return id;// CRITICAL FOR jam:offline: Returning the id cleanly registers deletion sync completion
     },
-    
-    async 'tasks.read'() {
-        return Tasks.find({}).fetch();
+
+    async 'tasks2.read'() {
+        return Tasks2.find({}).fetch();
     }
 });

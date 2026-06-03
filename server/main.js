@@ -8,11 +8,11 @@ import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import { logToFileByDate } from './util';
 
-const remoteUrl = "mongodb://192.168.75.51:27017/test";
-let remoteDriver = new MongoInternals.RemoteCollectionDriver(remoteUrl);
-export const TasksRemote = new Mongo.Collection("tasks_remote", {
-  _driver: remoteDriver
-})
+// const remoteUrl = "mongodb://192.168.75.8:27017/meteor";
+// let remoteDriver = new MongoInternals.RemoteCollectionDriver(remoteUrl);
+// export const TasksRemote = new Mongo.Collection("tasks_remote", {
+//   _driver: remoteDriver
+// })
 import dns from 'dns';
 
 // export const hasInternet = () => {
@@ -89,34 +89,91 @@ import dns from 'dns';
 //   Meteor.publish("tasks_remote", () => {
 //     return TasksRemote.find();
 //   });
-
-//   Meteor.methods({
-
-//     /**************************METEOR BACKEND -> MONGO DB  ***************************/
-//     async 'tasksRemote.insert'(data, uid) {
-//       console.log('Meteor backend performing INSERT')
-//       console.log('tasksRemote.insert called with data:', data, 'and uid:', uid);
-//         if (!data || !uid) {
-//             throw new Meteor.Error('Task data and uid are required');
-//         }
-//         //   let collectionRemoteInstance ;
-//         // if(Mongo.Collection.get(collectionRemoteName)){
-//         //     collectionRemoteInstance = Mongo.Collection.get(collectionRemoteName);
-//         // }
-//         // else{
-//         //   console.log(`Creating new remote collection instance for ${collectionRemoteName}`)
-//         //     collectionRemoteInstance = new Mongo.Collection(collectionRemoteName, { _driver: remoteDriver });
-//         // }
+Meteor.startup(() => {
+  // 1. Fetch the cursor for the data you want to track
+  const cursor = Tasks.find({});
 
 
-//         // const countRecords = await  Tasks.find().countAsync()+1;
-//         // console.log(countRecords)
-//         const taskId = await TasksRemote.insertAsync({ ...data,  _id:uid,createdAt: new Date() });
-//         console.log('TaskRemote added with ID:', uid); // Add this line
+  const pushToDSEBackend = async (payload,deviceId) => {
+      
+      // Try spreading the data array if the Meteor method expects multiple arguments
 
-//     },
+    console.log('Pushing data to DSE backend:', payload);
+      
+
+      await Meteor.applyAsync('pushToDSEBackend', [{...payload,deviceId:deviceId}]);
+
+      // if (!Meteor.status().connected) {
+      //   // Spreading data here ensures jam:offline queues each object properly if that's what it expects
+      //   queueMethod('pushToDSEBackend', ...payload);
+      // }
+  }
+  // 2. Observe the changes
+const handle = cursor.observe({
+    // observe passes the full document object
+    added(document) {
+       console.log(`Document ${document._id} was added.`);
+       pushToDSEBackend({
+          type: 'insert',
+          value: document
+       },document.deviceId);
+    },
+    // observe passes (newDocument, oldDocument)
+    changed(newDocument, oldDocument) {
+      console.log(`Document ${newDocument._id} was updated.`);
+      pushToDSEBackend({
+        type: 'update',
+        value: newDocument
+      },newDocument.deviceId);
+    },
+    // observe passes the full document right before it's deleted
+    removed(oldDocument) {
+      console.log(`Document ${oldDocument._id} was removed.`);
+      pushToDSEBackend({
+        type: 'delete',
+        value: oldDocument, // This will now be the full object!
+      },oldDocument.deviceId);
+    }
+  });
 
 
+});
+  Meteor.methods({
+// async 'devices.register'(deviceId) {
+//   console.log('Registering device with ID:', deviceId);
+//     this.connection.deviceId = deviceId;
+//     return true;
+//   },
+    /**************************METEOR BACKEND -> DSE Back  ***************************/
+    async 'pushToDSEBackend'(data) {
+    
+      console.log('Meteor backend performing pushToDSEBackend')
+      console.log('Data received in pushToDSEBackend:', data);
+
+      
+       try {
+        const response = await fetch('http://localhost:3003/api/sync-service/push-upward', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({...data}),
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const responseData = await response.json();
+        console.log('Response from DSE backend:', responseData);
+        console.log('====================')
+       
+
+
+      } catch (error) {
+        console.error('Error pushing data to DSE backend:', error);
+      }
+    }
+
+  })
 
 //     async 'tasksRemote.update'(data) {
 //               if (!data._id || !data) {

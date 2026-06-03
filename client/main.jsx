@@ -55,6 +55,20 @@ Meteor.startup(async () => {
 
     // },5000)
 
+    // if (Meteor.isCordova) {
+    //   const deviceId = window.device.uuid;
+    //   console.log('Device ID obtained:', deviceId);
+    //   // Send it to the backend immediately upon startup
+    //   Meteor.call('devices.register', deviceId, (error, result) => {
+    //     if (error) {
+    //       console.error('Failed to send device ID to server:', error);
+    //     } else {
+    //       console.log('Device ID successfully registered on server');
+    //     }
+    //   });
+    // }
+
+    
   }, false);
   console.log('Meteor client started');
   let liRecords = [];
@@ -83,35 +97,46 @@ Meteor.startup(async () => {
         let m = "";
         console.log('🔴METEROR-FRONT: Received message from pwa:\n'+message.data);
         let messageObj = JSON.parse(message.data)
+        const deviceId = window.device ? window.device.uuid : 'browser-dev-id';
         switch (messageObj.type) {
           case "save":
             if (messageObj.data) {
-              console.log('METEROR-FRONT: TYPE-SAVE Received message from pwa:', messageObj.data.text);
+       
 
-              const generateUniqueId = () => {
-                let generateRandomString = (length) => {
-                  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                  let result = '';
-                  for (let i = 0; i < length; i++) {
-                    result += chars.charAt(Math.floor(Math.random() * chars.length));
-                  }
-                  return `${new Date().getTime()}-${result}`;
-                }
-                return `${new Date().getTime()}_${generateRandomString(10)}`;
-              }
+              // const generateUniqueId = () => {
+              //   let generateRandomString = (length) => {
+              //     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+              //     let result = '';
+              //     for (let i = 0; i < length; i++) {
+              //       result += chars.charAt(Math.floor(Math.random() * chars.length));
+              //     }
+              //     return `${new Date().getTime()}-${result}`;
+              //   }
+              //   return `${new Date().getTime()}_${generateRandomString(10)}`;
+              // }
 
-              let uid = generateUniqueId()
-
-              await Meteor.applyAsync('tasks.insert', [{ text: messageObj.data.text }, uid], { noRetry: true }
+              // let uid = generateUniqueId()
+             
+              await Meteor.applyAsync('tasks.insert', [{ ...messageObj.data }, deviceId], { noRetry: true }
                 , (err, res) => { if (err) { console.log('method failed', err) } });
-              console.log('Meteor.status().connected:', Meteor.status().connected)
               if (!Meteor.status().connected) {
                 console.log('***********OFFLINE NOW,queue Method tasks.insert for later')
-                queueMethod('tasks.insert', { text: messageObj.data.text }, uid)
+                queueMethod('tasks.insert', { ...messageObj.data }, deviceId)
               }
 
 
-              console.log('Task saved:', messageObj.data);
+                  // const pushToDSEBackend = async () => {
+                  //   console.log('Pushing data to DSE backend:', messageObj.data);
+                  //               await Meteor.applyAsync('pushToDSEBackend', [messageObj.data]);
+    
+                  //               if (!Meteor.status().connected) {
+                  //                 // Spread the arguments array so jam:offline handles the data parameter perfectly
+                  //                 queueMethod('pushToDSEBackend', messageObj.data);
+                  //               }
+                  // }
+                  // pushToDSEBackend()
+
+
             } else {
               console.error('No task data found in message');
             }
@@ -119,14 +144,14 @@ Meteor.startup(async () => {
           case "update":
             if (messageObj.data) {
               console.log('updating')
-              const updateArgs = [messageObj.data];
+              const updateArgs = [{...messageObj.data}, deviceId];
 
               // Optimistically update local cache
               await Meteor.applyAsync('tasks.update', updateArgs, { noRetry: true });
 
               if (!Meteor.status().connected) {
                 // Spread the arguments array so jam:offline handles the data parameter perfectly
-                queueMethod('tasks.update', ...updateArgs);
+                queueMethod('tasks.update', {...updateArgs}, deviceId);
               }
 
 
@@ -141,11 +166,11 @@ Meteor.startup(async () => {
               console.log('deleting task ID:', messageObj.data._id);
 
               const targetId = messageObj.data._id;
-              const deleteArgs = [targetId];
+              const deleteArgs = [targetId, deviceId];
 
               // { noRetry: true } prevents this promise from hanging indefinitely while offline,
               // allowing the code execution to smoothly fall through to your queue logic.
-              await Meteor.applyAsync('tasks.remove', [targetId], { noRetry: true });
+              await Meteor.applyAsync('tasks.remove', deleteArgs, { noRetry: true });
 
 
               // Check connection status to queue the replay mechanism
@@ -153,7 +178,7 @@ Meteor.startup(async () => {
                 console.log('***********OFFLINE NOW, queueing Method tasks.remove for later');
 
                 // Pass the plain targetId string cleanly to the queue
-                queueMethod('tasks.remove', targetId);
+                queueMethod('tasks.remove', targetId, deviceId);
               } else {
                 console.log('***********Nothing need to Queue')
               }

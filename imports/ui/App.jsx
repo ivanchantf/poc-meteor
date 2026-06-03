@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Tracker } from "meteor/tracker";
 import { Tasks } from '../api/tasks';
+import { Tasks2 } from '../api/tasks2';
 import { Meteor } from 'meteor/meteor';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';
@@ -66,7 +67,7 @@ export const App = () => {
   }, [data.length]);
 
 
-  useEffect(() => {
+  useEffect(() => {console.log('useEffect triggered - checking if we can push to DSE backend. loggingIn:', loggingIn, 'hasSettled:', hasSettled, 'data length:', data.length)
     // Stop if we are still logging in, or if Minimongo hasn't settled its data load
     if (loggingIn || !hasSettled) return;
 
@@ -77,7 +78,6 @@ export const App = () => {
     if (iframe && iframe.contentWindow) {
       let payload=JSON.stringify({
           type: 'refresh',
-          path: 'http://abc:404/api/get-all',
           httpType: 'GET',
           data: data
         })
@@ -87,6 +87,21 @@ export const App = () => {
         '*'
       );
     }
+
+
+    // const pushToDSEBackend = async () => {
+    //   console.log('Pushing data to DSE backend:', data);
+      
+    //   // Try spreading the data array if the Meteor method expects multiple arguments
+    //   await Meteor.applyAsync('pushToDSEBackend', [...data]); 
+
+    //   if (!Meteor.status().connected) {
+    //     // Spreading data here ensures jam:offline queues each object properly if that's what it expects
+    //     queueMethod('pushToDSEBackend', ...data);
+    //   }
+    // }
+    // pushToDSEBackend();
+
   }, [data, userId, loggingIn, hasSettled]);
 
 
