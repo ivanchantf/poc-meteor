@@ -144,14 +144,13 @@ Meteor.startup(async () => {
           case "update":
             if (messageObj.data) {
               console.log('updating')
-              const updateArgs = [{...messageObj.data}, deviceId];
 
               // Optimistically update local cache
-              await Meteor.applyAsync('tasks.update', updateArgs, { noRetry: true });
+              await Meteor.applyAsync('tasks.update', [{...messageObj.data}, deviceId], { noRetry: true });
 
               if (!Meteor.status().connected) {
                 // Spread the arguments array so jam:offline handles the data parameter perfectly
-                queueMethod('tasks.update', {...updateArgs}, deviceId);
+                queueMethod('tasks.update', {...messageObj.data}, deviceId);
               }
 
 

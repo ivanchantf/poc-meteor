@@ -99,9 +99,10 @@ Meteor.startup(() => {
       // Try spreading the data array if the Meteor method expects multiple arguments
 
     console.log('Pushing data to DSE backend:', payload);
-      
+    let payloadWithoutDeviceId={...payload}
+    delete payloadWithoutDeviceId.value.deviceId
 
-      await Meteor.applyAsync('pushToDSEBackend', [{...payload,deviceId:deviceId}]);
+      await Meteor.applyAsync('pushToDSEBackend', [{...payloadWithoutDeviceId,deviceId:deviceId}]);
 
       // if (!Meteor.status().connected) {
       //   // Spreading data here ensures jam:offline queues each object properly if that's what it expects

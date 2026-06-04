@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Tracker } from "meteor/tracker";
 import { Tasks } from '../api/tasks';
-import { Tasks2 } from '../api/tasks2';
+
 import { Meteor } from 'meteor/meteor';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';

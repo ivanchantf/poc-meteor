@@ -19,6 +19,9 @@ Meteor.methods({
         if (!data._id || !data) {
             throw new Meteor.Error('Task _id and  data are required');
         }
+        else{
+            console.log('tasks.update method called with data:', data, 'and deviceId:', deviceId);
+        }
         await Tasks.updateAsync({ _id: data._id },{...data, deviceId:deviceId})
         return data._id; // Return the ID of the updated task
     },
