@@ -68,7 +68,18 @@ Meteor.startup(async () => {
     //   });
     // }
 
-    
+    const deviceUuid = window.device.uuid;
+    // Reactively track network connectivity states
+    Tracker.autorun(() => {
+      const status = Meteor.status();
+
+      if (status.connected) {
+        // Announce device existence and tie session ID to hardware UUID
+        Meteor.call('devices.registerHeartbeat', deviceUuid, (err) => {
+          if (err) console.error("Tracking registration failed:", err);
+        });
+      }
+    });
   }, false);
   console.log('Meteor client started');
   let liRecords = [];

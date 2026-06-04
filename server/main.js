@@ -1,5 +1,5 @@
 import { Meteor } from 'meteor/meteor';
-
+import { DeviceConnections } from '../imports/api/deviceConnections';
  import { Tasks } from '../imports/api/tasks';
 import '../imports/api/tasksPublications';
 
@@ -15,81 +15,27 @@ import { logToFileByDate } from './util';
 // })
 import dns from 'dns';
 
-// export const hasInternet = () => {
-//   return new Promise((resolve) => {
-//     // We resolve 'google.com' (or any stable domain)
-//     // lookup() checks if the machine can reach a DNS server
-//     dns.lookup('google.com', (err) => {
-//       if (err && err.code === 'ENOTFOUND') {
-//         resolve(false);
-//       } else {
-//         // If no error, or a different error (like timeout), 
-//         // we assume the network interface is active.
-//         resolve(true);
-//       }
-//     });
-//   });
-// };
-// let actionQueue = [];
-// let isProcessing = false; // The "Lock"
-
-// const queueAction = (apiTask) => {
-//   actionQueue.push(apiTask);
-  
-//   // Only start the processor if it isn't already running
-//   if (!isProcessing) {
-//     attemptQueueProcessing();
-//   }
-// };
-
-// const attemptQueueProcessing = async () => {
-//   // 1. Check if we're already busy or if the queue is empty
-//   if (isProcessing || actionQueue.length === 0) return;
-
-//   // 2. Set the lock
-//   isProcessing = true;
-
-//   // 3. Verify connection
-//   if (!(await hasInternet())) {
-//     console.log("Offline: Retrying in 5s...");
-//     isProcessing = false; // Release lock so we can try again later
-//     setTimeout(attemptQueueProcessing, 5000);
-//     return;
-//   }
-
-//   console.log("Online! Processing queue...");
-
-//   // 4. Process the queue while it has items
-//   while (actionQueue.length > 0) {
-//     const task = actionQueue[0]; // Look at the first task
+Meteor.startup(async () => {
+  // Allow your standalone dashboard domain to access your DDP endpoints
+  // WebApp.rawConnectHandlers.use((req, res, next) => {
+  //   // Replace with your actual standalone React app's domain in production
+  //   const allowedOrigin = 'http://localhost:5173'; 
     
-//     try {
-//       await task(); 
-//       actionQueue.shift(); // Remove only AFTER successful execution
-//       console.log(`Task finished, ${actionQueue.length} tasks left in queue.`);
-//     } catch (error) {
-//       console.error("Task failed. Stopping to preserve order.", error);
-//       logToFileByDate(error, `Error execute Task in attemptQueueProcessing: - task: ${task}`);
-//       isProcessing = false; 
-//       // Optionally: retry this specific task in 5s
-//       setTimeout(attemptQueueProcessing, 5000);
-//       return; 
-//     }
-//   }
+  //   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  //   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  //   res.setHeader('Access-Control-Allow-Credentials', 'true');
+  //   return next();
+  // });
+// // 1. Optimize lookups using database indexes
+  DeviceConnections.rawCollection().createIndex({ deviceUuid: 1 });
+  DeviceConnections.rawCollection().createIndex({ connectionId: 1 });
+// // 2. Clear out lingering "online" statuses if the server previously crashed/restarted
+  await DeviceConnections.updateAsync(
+    { status: 'online' }, 
+    { $set: { status: 'offline', lastSeen: new Date() } }, 
+    { multi: true }
+  );
 
-//   // 5. Final release of lock
-//   isProcessing = false;
-// };
-
-
-// Meteor.startup(async () => {
-
-
-
-//   Meteor.publish("tasks_remote", () => {
-//     return TasksRemote.find();
-//   });
-Meteor.startup(() => {
   // 1. Fetch the cursor for the data you want to track
   const cursor = Tasks.find({});
 
@@ -138,8 +84,32 @@ const handle = cursor.observe({
   });
 
 
+
+
 });
   Meteor.methods({
+    //Method for Cordova devices to announce themselves
+    async 'devices.registerHeartbeat'(deviceUuid) {
+   // check(deviceUuid, String);
+
+    const connectionId = this.connection.id;
+    const clientAddress = this.connection.clientAddress;
+
+    await DeviceConnections.upsertAsync(
+      { deviceUuid: deviceUuid },
+      {
+        $set: {
+          connectionId: connectionId,
+          ipAddress: clientAddress,
+          status: 'online',
+          lastSeen: new Date()
+        }
+      }
+    );
+
+    // Save UUID directly onto this active connection session object
+    this.connection.deviceUuid = deviceUuid;
+  },
 // async 'devices.register'(deviceId) {
 //   console.log('Registering device with ID:', deviceId);
 //     this.connection.deviceId = deviceId;
@@ -176,116 +146,35 @@ const handle = cursor.observe({
 
   })
 
-//     async 'tasksRemote.update'(data) {
-//               if (!data._id || !data) {
-//                   throw new Meteor.Error('Task _id and data are required');
-//               }
-//               await TasksRemote.updateAsync({ _id: data._id }, data)
-//               console.log('TaskRemote updated ID & data:', data._id, '  ', data); // Add this line
-//     },
+// 4. Global listener to intercept connection drops
+Meteor.onConnection((connection) => {
+  connection.onClose(async () => {
+    // If this specific closed socket was attached to a known device UUID
+    if (connection.deviceUuid) {
+      await DeviceConnections.updateAsync(
+        { deviceUuid: connection.deviceUuid, connectionId: connection.id },
+        {
+          $set: {
+            status: 'offline',
+            lastSeen: new Date()
+          }
+        }
+      );
+    }
+  });
+});
 
-
-//     async 'tasksRemote.remove'(id) {
-//       if (!id) {
-//         throw new Meteor.Error('Task id is required');
-//       }
-//       await TasksRemote.removeAsync({ _id: id });
-//       console.log('TaskRemote removed ID :', id); // Add this line
-//     },
-
-
-//     async 'tasksRemote.read'() {
-//       // console.log(`tasksRemote.read: Reading from remote collection: ${collectionRemoteName}`);
-//       //     let collectionRemoteInstance ;
-//       //     collectionRemoteInstance = MongoInternals.defaultRemoteCollectionDriver().mongo.db.collection(collectionRemoteName);
-//       //   if(typeof(collectionRemoteInstance) !=='undefined' && Object.keys(collectionRemoteInstance).length > 0){
-//       //       console.log(`Collection instance already exists for ${collectionRemoteName}`)
-//       //       console.log(collectionRemoteInstance)
-//       //   }
-//       //   else{
-//       //     console.log(`Creating new remote collection instance for ${collectionRemoteName}`)
-//       //       collectionRemoteInstance = new Mongo.Collection(collectionRemoteName, { _driver: remoteDriver });
-//       //   }
-//       return TasksRemote.find({}).fetch()
-//     },
-
-//     /**************************METEOR BACKEND -> PWA(DSE) BACKEND  ***************************/
-//     async 'tasksExternal.insert'(messageObj) {
-//       console.log('In tasksExternal.insert, received messageObj:', messageObj);
-//       queueAction(async () => {
-//         console.log("METEOR BACKEND -> PWA(DSE) BACKEND:insert...");
-//          await fetch(messageObj.path, { method: messageObj.httpType, body: JSON.stringify(messageObj.data), headers: { 'Content-Type': 'application/json' } })
-//           .then(response => response.json())
-//           .then(data => {
-//             console.log('Data insert to pwa-backend:', data);
-//           })
-//           .catch(error => {
-//             console.error('Error insert to pwa-backend:', error);
-//             logToFileByDate(error, `Error insert to pwa-backend: - Path: ${messageObj.path}`);
-//           });
-//       });
-
-
-//     },
-
-//     async 'tasksExternal.update'(messageObj) {
-//       console.log('In tasksExternal.update, received messageObj:', messageObj);
-//             queueAction(async () => {
-//         console.log("METEOR BACKEND -> PWA(DSE) BACKEND:update...");
-//          await fetch(messageObj.path, { method: messageObj.httpType, body: JSON.stringify(messageObj.data), headers: { 'Content-Type': 'application/json' } })
-//         .then(response => response.json())
-//         .then(data => {
-//           console.log('Data UPDATE in pwa-backend:', data);
-//         })
-//         .catch(error => {
-//           console.error('Error UPDATE in pwa-backend:', error);
-//           logToFileByDate(error, `Error UPDATE in pwa-backend: - Path: ${messageObj.path}`);
-//         });
-
-//       });
-
-//     },
-//     async 'tasksExternal.remove'(messageObj) {
-//       console.log('In tasksExternal.remove, received messageObj:', messageObj);
-//             queueAction(async () => {
-//         console.log("METEOR BACKEND -> PWA(DSE) BACKEND:delete...");
-//          await       fetch(messageObj.path, { method: messageObj.httpType, body: JSON.stringify(messageObj.data), headers: { 'Content-Type': 'application/json' } })
-//         .then(response => response.json())
-//         .then(data => {
-//           console.log('Data DELETE in pwa-backend:', data);
-//         })
-//         .catch(error => {
-//           console.error('Error DELETE in pwa-backend:', error);
-//           logToFileByDate(error, `Error DELETE in pwa-backend: ${messageObj.path}`);
-//         });
-
-//       });
-
-//     },
-//     async 'tasksExternal.read'(messageObj) {
-//       console.log('In tasksExternal.read, received messageObj:', messageObj);
-
-//       return fetch(messageObj.path, {
-//         method: 'GET',
-//         headers: { 'Content-Type': 'application/json' }
-//       })
-//         .then(response => {
-//           if (!response.ok) {
-//             throw new Error(`HTTP error! status: ${response.status}`);
-//           }
-//           return response.json(); // Pass the parsed JSON to the next .then()
-//         })
-//         .then(data => {
-//           console.log('Data fetched successfully:', data);
-//           return data; // This becomes the final result of the Method
-//         })
-//         .catch(error => {
-
-//           logToFileByDate(error, `tasksExternal.read - Path: ${messageObj.path}`);
-//           console.error('Error fetching data from pwa-backend:', error);
-//         });
-//     }
-//   })
-
-
-// });
+// // 5. Publish the live stream channel
+Meteor.publish('admin.deviceStatuses', function() {
+  // If you want to be extra safe and ensure Meteor tracks changes 
+  // on every property modification, fetch explicitly:
+  return DeviceConnections.find({}, {
+    fields: {
+      deviceUuid: 1,
+      connectionId: 1,
+      ipAddress: 1,
+      status: 1,
+      lastSeen: 1
+    }
+  });
+});
