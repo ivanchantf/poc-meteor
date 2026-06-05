@@ -80,7 +80,7 @@ Meteor.startup(async () => {
   try {
     await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
     const container = document.getElementById('react-target'); //react-target is the id of the div in main.html where we want to render our React app
-    const handle = Meteor.subscribe('tasks');
+    const handle = Meteor.subscribe('collectionUp');
 
     if (handle.ready()) {
       console.log("Subscription ready. Check IndexedDB now!");
@@ -98,14 +98,14 @@ Meteor.startup(async () => {
           case "save":
             if (messageObj.data) {
                     
-              await Meteor.applyAsync('tasks.insert', [{ ...messageObj.data }, deviceId], { noRetry: true }
+              await Meteor.applyAsync('collectionUp.insert', [{ ...messageObj.data }, deviceId], { noRetry: true }
                 , (err, res) => { if (err) { console.log('method failed', err) } });
               if (!Meteor.status().connected) {
-                console.log('***********OFFLINE NOW,queue Method tasks.insert for later')
-                queueMethod('tasks.insert', { ...messageObj.data }, deviceId)
+                console.log('***********OFFLINE NOW,queue Method collectionUp.insert for later')
+                queueMethod('collectionUp.insert', { ...messageObj.data }, deviceId)
               }
             } else {
-              console.error('No task data found in message');
+              console.error('No collectionUp data found in message');
             }
             break;
           case "update":
@@ -113,15 +113,15 @@ Meteor.startup(async () => {
               console.log('updating')
 
               // Optimistically update local cache
-              await Meteor.applyAsync('tasks.update', [{...messageObj.data}, deviceId], { noRetry: true });
+              await Meteor.applyAsync('collectionUp.update', [{...messageObj.data}, deviceId], { noRetry: true });
 
               if (!Meteor.status().connected) {
                 // Spread the arguments array so jam:offline handles the data parameter perfectly
-                queueMethod('tasks.update', {...messageObj.data}, deviceId);
+                queueMethod('collectionUp.update', {...messageObj.data}, deviceId);
               }
 
 
-              console.log('Task updated:', messageObj.data);
+              console.log('CollectionUp updated:', messageObj.data);
             } else {
               console.error('update error');
             }
@@ -129,39 +129,39 @@ Meteor.startup(async () => {
           case "delete":
             // Strict check: Ensure messageObj.data exists AND contains an _id
             if (messageObj.data && messageObj.data._id) {
-              console.log('deleting task ID:', messageObj.data._id);
+              console.log('deleting collectionUp ID:', messageObj.data._id);
 
               const targetId = messageObj.data._id;
               const deleteArgs = [targetId, deviceId];
 
               // { noRetry: true } prevents this promise from hanging indefinitely while offline,
               // allowing the code execution to smoothly fall through to your queue logic.
-              await Meteor.applyAsync('tasks.remove', deleteArgs, { noRetry: true });
+              await Meteor.applyAsync('collectionUp.remove', deleteArgs, { noRetry: true });
 
 
               // Check connection status to queue the replay mechanism
               if (!Meteor.status().connected) {
-                console.log('***********OFFLINE NOW, queueing Method tasks.remove for later');
+                console.log('***********OFFLINE NOW, queueing Method collectionUp.remove for later');
 
                 // Pass the plain targetId string cleanly to the queue
-                queueMethod('tasks.remove', targetId, deviceId);
+                queueMethod('collectionUp.remove', targetId, deviceId);
               } else {
                 console.log('***********Nothing need to Queue')
               }
 
-              console.log('Task deleted from local view:', messageObj.data);
+              console.log('CollectionUp deleted from local view:', messageObj.data);
             } else {
               console.error('Delete error: messageObj.data or _id property is missing.');
             }
             break;
           case "refresh":
-            // console.log(tasks)
+            // console.log(collectionUp)
             console.log(messageObj.collection)
-            console.log(`METEOR-FRONT:  will fetch latest tasks `)
+            console.log(`METEOR-FRONT:  will fetch latest collectionUp `)
 
-            liRecords = await Meteor.callAsync('tasks.read');
+            liRecords = await Meteor.callAsync('collectionUp.read');
 
-            console.log('METEOR-FRONT: Fetched latest tasks from Meteor local collection:')
+            console.log('METEOR-FRONT: Fetched latest collectionUp from Meteor local collection:')
             console.log(liRecords)
             console.log('🟥METEOR-FRONT:Sending liRecords from meteor to pwa')
             let iframe = document.getElementById("dse-front");

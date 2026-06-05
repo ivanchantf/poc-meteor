@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { Tracker } from "meteor/tracker";
-import { Tasks } from '../api/tasks';
+import { CollectionUp } from '../api/collectionUp';
 
 import { Meteor } from 'meteor/meteor';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
@@ -15,8 +15,8 @@ Tracker.autorun(() => {
   const loggingIn = Meteor.loggingIn();
   console.log('userID', userId)
   console.log('loggingIn', loggingIn)
-  const data = Tasks.find({}).fetch();
-  console.log('Meteor front -Tracker : use Collection updated, current count of Tasks:', data.length);
+  const data = CollectionUp.find({}).fetch();
+  console.log('Meteor front -Tracker : use Collection updated, current count of CollectionUp:', data.length);
 
 });
 
@@ -31,11 +31,11 @@ export const App = () => {
   }, [status])
 
 
-  const { tasks, isLoading } = useTracker(() => {
-    const handle = Meteor.subscribe('tasks');
+  const { collectionUp, isLoading } = useTracker(() => {
+    const handle = Meteor.subscribe('collectionUp');
     return {
       isLoading: !handle.ready(),
-      tasks: Tasks.find({}).fetch(),
+      collectionUp: CollectionUp.find({}).fetch(),
     };
   }, []);
 
@@ -47,7 +47,7 @@ export const App = () => {
     return {
       userId: Meteor.userId(),
       loggingIn: Meteor.loggingIn(),
-      data: Tasks.find({}).fetch(),
+      data: CollectionUp.find({}).fetch(),
     };
   });
 
@@ -69,7 +69,7 @@ export const App = () => {
     if (loggingIn || !hasSettled) return;
 
     console.log('userID', userId);
-    console.log('Meteor front - Data settled. Current count of Tasks:', data.length);
+    console.log('Meteor front - Data settled. Current count of CollectionUp:', data.length);
 
     const iframe = document.getElementById("dse-front")
     if (iframe && iframe.contentWindow) {
@@ -128,12 +128,12 @@ export const App = () => {
             <h2>List of records in minimongoo</h2>
 
             <ul style={{ fontSize: '5px', padding: 0, marginTop: 20 }}>
-              {tasks.map((task) => (
+              {collectionUp.map((collectionUp) => (
 
-                <li key={task._id + Math.random()} className='list-item'>
-                  <p className='item-id'>{task.cnt}</p>
+                <li key={collectionUp._id + Math.random()} className='list-item'>
+                  <p className='item-id'>{collectionUp.cnt}</p>
                   <div style={{ width: "10px" }}>
-                    {task.text}</div>
+                    {collectionUp.text}</div>
 
  
                 </li>

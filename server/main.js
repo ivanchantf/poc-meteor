@@ -1,7 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { DeviceConnections } from '../imports/api/deviceConnections';
- import { Tasks } from '../imports/api/tasks';
-import '../imports/api/tasksPublications';
+ import { CollectionUp } from '../imports/api/collectionUp';
+import '../imports/api/collectionUpPublications';
 
 import dotenv from 'dotenv';
 import '../imports/api/offline';
@@ -10,7 +10,7 @@ import { logToFileByDate } from './util';
 
 // const remoteUrl = "mongodb://192.168.75.8:27017/meteor";
 // let remoteDriver = new MongoInternals.RemoteCollectionDriver(remoteUrl);
-// export const TasksRemote = new Mongo.Collection("tasks_remote", {
+// export const CollectionUpRemote = new Mongo.Collection("collectionUp_remote", {
 //   _driver: remoteDriver
 // })
 import dns from 'dns';
@@ -37,7 +37,7 @@ Meteor.startup(async () => {
   );
 
   // 1. Fetch the cursor for the data you want to track
-  const cursor = Tasks.find({});
+  const cursor = CollectionUp.find({});
 
 
   const pushToDSEBackend = async (payload,deviceId) => {

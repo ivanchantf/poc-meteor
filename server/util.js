@@ -1,6 +1,6 @@
 import { Meteor } from 'meteor/meteor';
 
-import '../imports/api/tasksPublications';
+import '../imports/api/collectionUpPublications';
 
 import dotenv from 'dotenv';
 import '../imports/api/offline';
