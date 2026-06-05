@@ -2,7 +2,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Meteor } from 'meteor/meteor';
 import { App } from '/imports/ui/App';
-import { Tasks } from '../imports/api/tasks';
 import { Tracker } from "meteor/tracker";
 import { queueMethod } from 'meteor/jam:offline';
 import '../imports/api/offline';
@@ -52,28 +51,14 @@ Meteor.startup(async () => {
     cordova.plugins.backgroundMode.setEnabled(true);
     // setInterval(()=>{
     // cordova.plugins.backgroundMode.isActive()?console.log('Background mode is active') : console.log('Background mode is not active');
-
     // },5000)
-
-    // if (Meteor.isCordova) {
-    //   const deviceId = window.device.uuid;
-    //   console.log('Device ID obtained:', deviceId);
-    //   // Send it to the backend immediately upon startup
-    //   Meteor.call('devices.register', deviceId, (error, result) => {
-    //     if (error) {
-    //       console.error('Failed to send device ID to server:', error);
-    //     } else {
-    //       console.log('Device ID successfully registered on server');
-    //     }
-    //   });
-    // }
 
     const deviceUuid = window.device.uuid;
     // Reactively track network connectivity states
     Tracker.autorun(() => {
       const status = Meteor.status();
 
-      if (status.connected) {
+      if (Meteor.isCordova && status.connected) {
         // Announce device existence and tie session ID to hardware UUID
         Meteor.call('devices.registerHeartbeat', deviceUuid, (err) => {
           if (err) console.error("Tracking registration failed:", err);
@@ -112,42 +97,13 @@ Meteor.startup(async () => {
         switch (messageObj.type) {
           case "save":
             if (messageObj.data) {
-       
-
-              // const generateUniqueId = () => {
-              //   let generateRandomString = (length) => {
-              //     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-              //     let result = '';
-              //     for (let i = 0; i < length; i++) {
-              //       result += chars.charAt(Math.floor(Math.random() * chars.length));
-              //     }
-              //     return `${new Date().getTime()}-${result}`;
-              //   }
-              //   return `${new Date().getTime()}_${generateRandomString(10)}`;
-              // }
-
-              // let uid = generateUniqueId()
-             
+                    
               await Meteor.applyAsync('tasks.insert', [{ ...messageObj.data }, deviceId], { noRetry: true }
                 , (err, res) => { if (err) { console.log('method failed', err) } });
               if (!Meteor.status().connected) {
                 console.log('***********OFFLINE NOW,queue Method tasks.insert for later')
                 queueMethod('tasks.insert', { ...messageObj.data }, deviceId)
               }
-
-
-                  // const pushToDSEBackend = async () => {
-                  //   console.log('Pushing data to DSE backend:', messageObj.data);
-                  //               await Meteor.applyAsync('pushToDSEBackend', [messageObj.data]);
-    
-                  //               if (!Meteor.status().connected) {
-                  //                 // Spread the arguments array so jam:offline handles the data parameter perfectly
-                  //                 queueMethod('pushToDSEBackend', messageObj.data);
-                  //               }
-                  // }
-                  // pushToDSEBackend()
-
-
             } else {
               console.error('No task data found in message');
             }

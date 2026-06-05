@@ -1,6 +1,5 @@
 import { Meteor } from 'meteor/meteor';
 
-// import { Tasks } from '../imports/api/tasks';
 import '../imports/api/tasksPublications';
 
 import dotenv from 'dotenv';

@@ -20,9 +20,6 @@ Tracker.autorun(() => {
 
 });
 
-
-
-
 export const App = () => {
 
   const { connected, status } = useTracker(() => Meteor.status());
@@ -88,20 +85,6 @@ export const App = () => {
       );
     }
 
-
-    // const pushToDSEBackend = async () => {
-    //   console.log('Pushing data to DSE backend:', data);
-      
-    //   // Try spreading the data array if the Meteor method expects multiple arguments
-    //   await Meteor.applyAsync('pushToDSEBackend', [...data]); 
-
-    //   if (!Meteor.status().connected) {
-    //     // Spreading data here ensures jam:offline queues each object properly if that's what it expects
-    //     queueMethod('pushToDSEBackend', ...data);
-    //   }
-    // }
-    // pushToDSEBackend();
-
   }, [data, userId, loggingIn, hasSettled]);
 
 
@@ -121,25 +104,18 @@ export const App = () => {
         )}
 
       </div>
-      {/* <div>
-   
-        <div className="online-status">Meteor.status().connected:<span className='online-status-indicator'> {connected ? '✅ Online' : '❌Offline'}</span></div>
+      {/* <div><div className="online-status">Meteor.status().connected:<span className='online-status-indicator'> {connected ? '✅ Online' : '❌Offline'}</span></div>  </div> */}
        
-      </div> */}
+    
       <div style={{
         display: "flex", flexDirection: "column"
 
       }} >
 
-
-
-        
         {/* http://10.0.2.2:3010 http://localhost:3010*/}
         <div style={{ width: "100%", height: 1000 }}>
           <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
-
-
 
         {/* <div className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', border: '12px solid black', backgroundColor: '#bbbbbbff', padding: '2px', margin: '4px' }}>
 
