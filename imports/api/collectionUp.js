@@ -1,6 +1,6 @@
 import { Mongo } from 'meteor/mongo';
 import { Meteor } from "meteor/meteor";
-import { MongoInternals } from 'meteor/mongo';
+
 import './offline';
 export const CollectionUp = new Mongo.Collection('collectionUp');
 // Explicitly tell jam:offline to track this collection
