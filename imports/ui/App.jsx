@@ -8,7 +8,6 @@ import { Meteor } from 'meteor/meteor';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';
 
-
 Tracker.autorun(() => {
 
   const userId = Meteor.userId();
@@ -91,6 +90,17 @@ export const App = () => {
 
 
   const syncing = useTracker(() => isSyncing(), []);
+
+  const test=()=>{
+    console.log('Test button clicked - will call rooms.broadcastToDevices with a sample record');
+    const newRecord = {
+      alert: "Temperature threshold exceeded",
+      timestamp: new Date()
+    };
+
+    // If calling internally on the server, you can execute the method logic:
+    Meteor.call('rooms.broadcastToDevices', 'Room 1', newRecord);
+  }
   return (
     <div >
       <div>
@@ -105,7 +115,7 @@ export const App = () => {
 
       </div>
       {/* <div><div className="online-status">Meteor.status().connected:<span className='online-status-indicator'> {connected ? '✅ Online' : '❌Offline'}</span></div>  </div> */}
-       
+       <button onClick={test} style={{width: '200px', height: '50px'}}>Test</button>
     
       <div style={{
         display: "flex", flexDirection: "column"

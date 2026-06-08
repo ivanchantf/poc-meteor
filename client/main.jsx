@@ -6,7 +6,7 @@ import { Tracker } from "meteor/tracker";
 import { queueMethod } from 'meteor/jam:offline';
 import '../imports/api/offline';
 import _ from 'lodash';
-
+import { DeviceMessages } from '../imports/api/deviceMessages';
 
 const injectUserID = () => {
   const FAKE_USER_ID = 'fake-user-12345';
@@ -63,6 +63,18 @@ Meteor.startup(async () => {
         Meteor.call('devices.registerHeartbeat', deviceUuid, (err) => {
           if (err) console.error("Tracking registration failed:", err);
         });
+      }
+    });
+
+    Meteor.subscribe('device.messages', deviceUuid);
+
+    Tracker.autorun(() => {
+      // This triggers automatically whenever sendToDevice() is called on the server
+      const latestMessage = DeviceMessages.findOne({ deviceUuid: deviceUuid }, { sort: { createdAt: -1 } });
+      console.log('Tracker autorun triggered for device messages. Latest message:', latestMessage);
+      if (latestMessage) {
+        console.log("Received payload from server:", latestMessage.payload);
+        // Execute hardware/UI logic here!
       }
     });
   }, false);

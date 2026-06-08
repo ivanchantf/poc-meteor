@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import { logToFileByDate } from './util';
-
+import { DeviceMessages } from '/imports/api/deviceMessages';
 // const remoteUrl = "mongodb://192.168.75.8:27017/meteor";
 // let remoteDriver = new MongoInternals.RemoteCollectionDriver(remoteUrl);
 // export const CollectionUpRemote = new Mongo.Collection("collectionUp_remote", {
@@ -87,6 +87,22 @@ const handle = cursor.observe({
 
 
 });
+
+async function sendToDevice(deviceUuid, payload) {
+  console.log(`[Transport] Pushing via WebSocket to: ${deviceUuid}`);
+  
+  // Insert the message into the reactive queue
+  const messageId = await DeviceMessages.insertAsync({
+    deviceUuid,
+    payload,
+    createdAt: new Date()
+  });
+
+  // Optional: Clean up the message after a few seconds so the DB stays light
+  Meteor.setTimeout(async () => {
+    await DeviceMessages.removeAsync(messageId);
+  }, 5000); 
+}
   Meteor.methods({
     //Method for Cordova devices to announce themselves
     async 'devices.registerHeartbeat'(deviceUuid) {
@@ -142,7 +158,58 @@ const handle = cursor.observe({
       } catch (error) {
         console.error('Error pushing data to DSE backend:', error);
       }
+    },
+
+    async 'deviceConnections.updateRooms'(deviceId, roomsArray) {
+    // simpleDDP unpacks the array [deviceId, updatedRooms] into these 2 arguments
+    console.log('Updating rooms for device:', deviceId, 'with rooms:', roomsArray); 
+    // Now this structural argument validation will pass perfectly!
+    if (typeof deviceId !== 'string' || !Array.isArray(roomsArray)) {
+      throw new Meteor.Error('invalid-arguments', 'Invalid payload structures submitted.');
     }
+
+    return DeviceConnections.updateAsync(
+      { _id: deviceId },
+      { 
+        $set: { 
+          rooms: roomsArray,
+          updatedAt: new Date()
+        } 
+      }
+    );
+  },
+  async 'rooms.broadcastToDevices'(roomName, recordData) {
+    console.log(`Broadcasting to devices in ${roomName} with record:`, recordData);
+    // 1. Validate inputs
+    if (!roomName || typeof roomName !== 'string') {
+      throw new Meteor.Error('invalid-argument', 'Room name must be a string.');
+    }
+
+    // 2. Query MongoDB
+    // MongoDB automatically searches inside arrays if the field ('rooms') is an array.
+    const targetDevices = await DeviceConnections.find({
+      rooms: roomName,
+      status: 'online' // Optional: Only send if the device is currently online
+    }).fetch();
+
+
+    if (targetDevices.length === 0) {
+      console.log(`No online devices found for ${roomName}`);
+      return { success: true, count: 0 };
+    }
+
+    console.log(`Found ${targetDevices.length} device(s) for ${roomName}. Dispatching...`);
+
+    // 3. Iterate and send according to deviceUuid
+    targetDevices.forEach((device) => {
+      sendToDevice(device.deviceUuid, recordData);
+    });
+
+    return {
+      success: true,
+      count: targetDevices.length
+    };
+  }
 
   })
 
@@ -174,7 +241,8 @@ Meteor.publish('admin.deviceStatuses', function() {
       connectionId: 1,
       ipAddress: 1,
       status: 1,
-      lastSeen: 1
+      lastSeen: 1,
+      rooms: 1
     }
   });
 });
