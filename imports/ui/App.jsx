@@ -91,16 +91,30 @@ export const App = () => {
 
   const syncing = useTracker(() => isSyncing(), []);
 
-  const test=()=>{
-    console.log('Test button clicked - will call rooms.broadcastToDevices with a sample record');
-    const newRecord = {
-      alert: "Temperature threshold exceeded",
-      timestamp: new Date()
-    };
+//   const test=async ()=>{
+//     console.log('Test button clicked - will call rooms.broadcastToDevices with a sample record');
+//     // const newRecord = {
+//     //   alert: "Temperature threshold exceeded",
+//     //   timestamp: new Date()
+//     // };
 
-    // If calling internally on the server, you can execute the method logic:
-    Meteor.call('rooms.broadcastToDevices', 'Room 1', newRecord);
-  }
+//     // // If calling internally on the server, you can execute the method logic:
+//     // Meteor.call('rooms.broadcastToDevices', 'Room 1', newRecord);
+
+//     const response = await fetch('http://localhost:3000/api/broadcast', {
+//   method: 'POST',
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+//   body: JSON.stringify({
+//     roomName: 'Room 1',
+//     recordData: { temperature: 22.5, rainy: true, status: 'active' }
+//   }),
+// });
+
+// const result = await response.json();
+// console.log(result); // { success: true, count: 3 }
+//   }
   return (
     <div >
       <div>
@@ -115,7 +129,7 @@ export const App = () => {
 
       </div>
       {/* <div><div className="online-status">Meteor.status().connected:<span className='online-status-indicator'> {connected ? '✅ Online' : '❌Offline'}</span></div>  </div> */}
-       <button onClick={test} style={{width: '200px', height: '50px'}}>Test</button>
+       {/* <button onClick={test} style={{width: '200px', height: '50px'}}>2Test</button> */}
     
       <div style={{
         display: "flex", flexDirection: "column"

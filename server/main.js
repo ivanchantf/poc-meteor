@@ -8,6 +8,9 @@ import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import { logToFileByDate } from './util';
 import { DeviceMessages } from '/imports/api/deviceMessages';
+
+import { WebApp } from 'meteor/webapp';
+import express from 'express';
 // const remoteUrl = "mongodb://192.168.75.8:27017/meteor";
 // let remoteDriver = new MongoInternals.RemoteCollectionDriver(remoteUrl);
 // export const CollectionUpRemote = new Mongo.Collection("collectionUp_remote", {
@@ -213,6 +216,8 @@ async function sendToDevice(deviceUuid, payload) {
 
   })
 
+
+  
 // 4. Global listener to intercept connection drops
 Meteor.onConnection((connection) => {
   connection.onClose(async () => {
@@ -245,4 +250,88 @@ Meteor.publish('admin.deviceStatuses', function() {
       rooms: 1
     }
   });
+});
+// Helper to parse the JSON body without breaking Meteor's fiber/async loop
+const getRequestBody = (req) => {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => resolve(body));
+    req.on('error', (err) => reject(err));
+  });
+};
+
+WebApp.connectHandlers.use('/api/broadcast', async (req, res, next) => {
+  // 1. Set global CORS headers immediately
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // 2. Handle the Preflight OPTIONS request safely
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    return res.end();
+  }
+
+  // 3. Ensure it's a POST request
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ error: 'Method Not Allowed. Use POST.' }));
+  }
+
+  try {
+    // 4. Safely await the full body string before doing DB work
+    const rawBody = await getRequestBody(req);
+    
+    if (!rawBody) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Empty request body' }));
+    }
+
+    const payload = JSON.parse(rawBody);
+    const { roomName, recordData } = payload;
+
+    // 5. Validation
+    if (!roomName || typeof roomName !== 'string') {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Room name must be a string.' }));
+    }
+
+    console.log(`[API Endpoint] Fetching online devices in room: ${roomName}`);
+
+    // 6. Database Lookup (Awaited securely)
+    const targetDevices = await DeviceConnections.find({
+      rooms: roomName,
+      status: 'online'
+    }).fetchAsync(); // Use fetchAsync() if you are on Meteor 3.x, or fetch() for Meteor 2.x
+
+    if (!targetDevices || targetDevices.length === 0) {
+      console.log(`[API Endpoint] No online devices found for ${roomName}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, count: 0 }));
+    }
+
+    console.log(`[API Endpoint] Found ${targetDevices.length} device(s). Dispatching...`);
+
+    // 7. Dispatch messages
+    targetDevices.forEach((device) => {
+      sendToDevice(device.deviceUuid, recordData);
+    });
+
+    // 8. Send the final response back to close the request
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({
+      success: true,
+      count: targetDevices.length
+    }));
+
+  } catch (error) {
+    console.error('[API Endpoint] Fatal Error:', error);
+    
+    // Crucial: Always close the response link if an error happens, otherwise it hangs!
+    if (!res.writableEnded) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal Server Error', details: error.message }));
+    }
+  }
 });
