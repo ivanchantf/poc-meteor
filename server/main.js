@@ -101,10 +101,7 @@ async function sendToDevice(deviceUuid, payload) {
     createdAt: new Date()
   });
 
-  // Optional: Clean up the message after a few seconds so the DB stays light
-  Meteor.setTimeout(async () => {
-    await DeviceMessages.removeAsync(messageId);
-  }, 5000); 
+
 }
   Meteor.methods({
     //Method for Cordova devices to announce themselves
