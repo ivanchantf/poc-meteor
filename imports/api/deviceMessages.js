@@ -1,18 +1,12 @@
-// // imports/api/deviceMessages.js
+// imports/api/deviceMessages.js
 import { Mongo } from 'meteor/mongo';
 export const DeviceMessages = new Mongo.Collection('device_messages');
 
 if (Meteor.isServer) {
-  // Clear old messages on startup so it doesn't grow indefinitely
-  // Meteor.startup(async () => {
-  //   await DeviceMessages.removeAsync({}); 
-  // });
-
-  // Devices subscribe to this to receive their specific payloads
-  Meteor.publish('device.messages', function (deviceUuid) {
-    if (!deviceUuid) return this.ready();
+  Meteor.publish('device.messages', function (roomsArray) {
+    if (!roomsArray || !Array.isArray(roomsArray)) return this.ready();
     
-    // Only send messages meant for this specific device UUID
-    return  DeviceMessages.find({ deviceUuid });
+    // Returns the cursor. Meteor handles the async streaming under the hood.
+    return DeviceMessages.find({ roomName: { $in: roomsArray } });
   });
 }

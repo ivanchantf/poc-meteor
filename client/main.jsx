@@ -7,6 +7,7 @@ import { queueMethod } from 'meteor/jam:offline';
 import '../imports/api/offline';
 import _ from 'lodash';
 import { DeviceMessages } from '../imports/api/deviceMessages';
+import { DeviceConnections} from '../imports/api/deviceConnections';
 
 const injectUserID = () => {
   const FAKE_USER_ID = 'fake-user-12345';
@@ -44,16 +45,19 @@ const injectUserID = () => {
 }
 Meteor.startup(async () => {
 
-  injectUserID()
+  injectUserID() 
+  let deviceUuid = window.device.uuid;
   document.addEventListener('deviceready', function () {
     // cordova.plugins.backgroundMode is now available
-    console.log('Device is ready, cordova.plugins.backgroundMode is available');
+    console.log('Device is ready, cordova.plugins.backgroundMode is available.');
     cordova.plugins.backgroundMode.setEnabled(true);
     // setInterval(()=>{
     // cordova.plugins.backgroundMode.isActive()?console.log('Background mode is active') : console.log('Background mode is not active');
     // },5000)
+    // Update the UUID if running on an actual device/emulator
 
-    const deviceUuid = window.device.uuid;
+
+   
     // Reactively track network connectivity states
     Tracker.autorun(() => {
       const status = Meteor.status();
@@ -66,18 +70,69 @@ Meteor.startup(async () => {
       }
     });
 
-    Meteor.subscribe('device.messages', deviceUuid);
+    Meteor.subscribe('device.connections', deviceUuid);
+    // Subscribe to track connection states
+    Meteor.subscribe('admin.deviceStatuses');
 
+    // Reactively track connection rooms and handle dynamic subscriptions
     Tracker.autorun(() => {
-      // This triggers automatically whenever sendToDevice() is called on the server
-      const latestMessage = DeviceMessages.findOne({ deviceUuid: deviceUuid }, { sort: { createdAt: -1 } });
-      console.log('Tracker autorun triggered for device messages. Latest message:', latestMessage);
-      if (latestMessage) {
-        console.log("Received payload from server:", latestMessage.payload);
-        // Execute hardware/UI logic here!
+      console.log('Tracker.autorun triggered!!!!');
+
+      // 1. Establish reactivity on the find query cursor
+      const connectionCursor = DeviceConnections.find({ deviceUuid: deviceUuid });
+
+      // Fetching explicitly tells Tracker to watch this document query for changes
+      const connectionDoc = connectionCursor.fetch()[0];
+
+      if (!connectionDoc) {
+        console.log('[Tracker] DeviceConnections collection is currently empty for this UUID.');
+        return;
+      }
+
+      // Extract the rooms array. Reading this property explicitly registers it as a dependency.
+      const myRooms = connectionDoc.rooms || [];
+
+      // if (myRooms.length === 0) {
+      //   console.log('[Tracker] Connection doc found, but "rooms" field is empty or missing.');
+      //   return;
+      // }
+
+      console.log(`[Tracker] Current connection rooms: ${myRooms.join(', ')}`);
+
+      // --- CLIENT-ONLY CLEANUP FOR JAM:OFFLINE ---
+      // Fix: We must isolate database mutations using Tracker.nonreactive. 
+      // Otherwise, deleting records inside an autorun can disrupt Meteor's reactive cycle.
+      const staleMessages = DeviceMessages.find({ roomName: { $nin: myRooms } }).fetch();
+      console.log('stalemsg count:', staleMessages.length);
+
+      if (staleMessages.length > 0) {
+        console.log(`[Tracker] Purging ${staleMessages.length} stale messages from local cache.`);
+
+        Tracker.nonreactive(() => {
+          staleMessages.forEach(msg => {
+            DeviceMessages._collection.remove(msg._id);
+          });
+        });
+      }
+      // --------------------------------------------
+
+      // 2. Dynamic Subscription
+      // When 'myRooms' changes, Tracker will automatically stop the old subscription and start this new one.
+      const msgSub = Meteor.subscribe('device.messages', myRooms);
+
+      if (msgSub.ready()) {
+        const latestMessage = DeviceMessages.find(
+          { roomName: { $in: myRooms } },
+          { sort: { createdAt: -1 }, limit: 1 }
+        ).fetch()[0];
+
+        if (latestMessage && myRooms.includes(latestMessage.roomName)) {
+          console.log(`[Tracker] LAST MSG for this device: ${JSON.stringify(latestMessage)}`);
+
+        }
       }
     });
-  }, false);
+
   console.log('Meteor client started');
   let liRecords = [];
   const subscribeAndWait = (name, ...args) => {
@@ -88,7 +143,7 @@ Meteor.startup(async () => {
       });
     });
   };
-
+ } , false);
   try {
     await navigator.serviceWorker.register('/sw.js'); // must match the name given to your service work file
     const container = document.getElementById('react-target'); //react-target is the id of the div in main.html where we want to render our React app

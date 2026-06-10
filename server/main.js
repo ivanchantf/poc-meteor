@@ -91,17 +91,17 @@ const handle = cursor.observe({
 
 });
 
-async function sendToDevice(deviceUuid, payload) {
-  console.log(`[Transport] Pushing via WebSocket to: ${deviceUuid}`);
+// Change sendToDevice to sendToRoom using insertAsync
+async function sendToRoom(roomName, payload) {
+  console.log(`[Transport] Pushing via WebSocket to Room: ${roomName}`);
   
-  // Insert the message into the reactive queue
+  // Insert the message targeted to the room using Meteor 3 async format
   const messageId = await DeviceMessages.insertAsync({
-    deviceUuid,
+    roomName, // Storing Room name instead of UUID
     payload,
     createdAt: new Date()
   });
-
-
+  return messageId;
 }
   Meteor.methods({
     //Method for Cordova devices to announce themselves
@@ -232,7 +232,10 @@ Meteor.onConnection((connection) => {
     }
   });
 });
-
+Meteor.publish('device.connections', function(deviceUuid) {
+  //check(deviceUuid, String);
+  return DeviceConnections.find({ deviceUuid });
+});
 // // 5. Publish the live stream channel
 Meteor.publish('admin.deviceStatuses', function() {
   // If you want to be extra safe and ensure Meteor tracks changes 
@@ -295,33 +298,29 @@ WebApp.connectHandlers.use('/api/broadcast', async (req, res, next) => {
     }
 
     console.log(`[API Endpoint] Fetching online devices in room: ${roomName}`);
-
-    // 6. Database Lookup (Awaited securely)
+// 6. Database Lookup using Meteor 3 fetchAsync()
     const targetDevices = await DeviceConnections.find({
       rooms: roomName,
       status: 'online'
-    }).fetchAsync(); // Use fetchAsync() if you are on Meteor 3.x, or fetch() for Meteor 2.x
+    }).fetchAsync(); // Fully async for Meteor 3
 
-    if (!targetDevices || targetDevices.length === 0) {
-      console.log(`[API Endpoint] No online devices found for ${roomName}`);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, count: 0 }));
-    }
+    // if (!targetDevices || targetDevices.length === 0) {
+    //   console.log(`[API Endpoint] No online devices found for ${roomName}`);
+    //   res.writeHead(200, { 'Content-Type': 'application/json' });
+    //   return res.end(JSON.stringify({ success: true, count: 0 }));
+    // }
 
     console.log(`[API Endpoint] Found ${targetDevices.length} device(s). Dispatching...`);
 
-    // 7. Dispatch messages
-    targetDevices.forEach((device) => {
-      sendToDevice(device.deviceUuid, recordData);
-    });
+    // 7. Dispatch message directly to the target room stream once
+    await sendToRoom(roomName, recordData);
 
-    // 8. Send the final response back to close the request
+    // 8. Send response
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       success: true,
       count: targetDevices.length
     }));
-
   } catch (error) {
     console.error('[API Endpoint] Fatal Error:', error);
     
