@@ -19,7 +19,12 @@ Meteor.publish('admin.deviceStatuses', function() {
       ipAddress: 1,
       status: 1,
       lastSeen: 1,
-      rooms: 1
+      rooms: 1,
+      model: 1,
+      platform: 1,
+      manufacturer: 1,
+      sdkVersion: 1,
+      version: 1
     }
   });
 });

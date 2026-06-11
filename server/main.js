@@ -105,8 +105,14 @@ async function sendToRoom(roomName, payload) {
 }
   Meteor.methods({
     //Method for Cordova devices to announce themselves
-    async 'devices.registerHeartbeat'(deviceUuid) {
+    async 'devices.registerHeartbeat'(deviceInfo) {
    // check(deviceUuid, String);
+    let deviceUuid=deviceInfo.uuid || '';
+    let deviceModel=deviceInfo.model || '';
+    let devicePlatform=deviceInfo.platform || '';
+    let deviceManufacturer=deviceInfo.manufacturer || '';
+    let deviceSdkVersion=deviceInfo.sdkVersion || '';
+    let deviceVersion=deviceInfo.version || '';
 
     const connectionId = this.connection.id;
     const clientAddress = this.connection.clientAddress;
@@ -118,7 +124,12 @@ async function sendToRoom(roomName, payload) {
           connectionId: connectionId,
           ipAddress: clientAddress,
           status: 'online',
-          lastSeen: new Date()
+          lastSeen: new Date(),
+          model: deviceModel,
+          platform: devicePlatform,
+          manufacturer: deviceManufacturer,
+          sdkVersion: deviceSdkVersion,
+          version: deviceVersion
         }
       }
     );
@@ -134,7 +145,7 @@ async function sendToRoom(roomName, payload) {
     /**************************METEOR BACKEND -> DSE Back  ***************************/
     async 'pushToDSEBackend'(data) {
     
-      console.log('Meteor backend performing pushToDSEBackend')
+      console.log('Meteor backend performing pushToDSEBackend.')
       console.log('Data received in pushToDSEBackend:', data);
 
       

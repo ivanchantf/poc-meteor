@@ -68,8 +68,10 @@ Meteor.startup(async () => {
       const status = Meteor.status();
 
       if (Meteor.isCordova && status.connected) {
+        console.log('ℹ️ Device is online. Registering heartbeat with UUID:', deviceUuid);
+        console.log('ℹ️ Device info',window.device)
         // Announce device existence and tie session ID to hardware UUID
-        Meteor.call('devices.registerHeartbeat', deviceUuid, (err) => {
+        Meteor.call('devices.registerHeartbeat', window.device, (err) => {
           if (err) console.error("Tracking registration failed:", err);
         });
       }
