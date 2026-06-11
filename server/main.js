@@ -1,5 +1,5 @@
 import { Meteor } from 'meteor/meteor';
-import { DeviceConnections } from '../imports/api/deviceConnections';
+
  import { CollectionUp } from '../imports/api/collectionUp';
 import '../imports/api/collectionUpPublications';
 
@@ -8,7 +8,7 @@ import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import { logToFileByDate } from './util';
 import { DeviceMessages } from '/imports/api/deviceMessages';
-
+import { DeviceConnections } from '../imports/api/deviceConnections';
 import { WebApp } from 'meteor/webapp';
 import express from 'express';
 // const remoteUrl = "mongodb://192.168.75.8:27017/meteor";
@@ -232,25 +232,25 @@ Meteor.onConnection((connection) => {
     }
   });
 });
-Meteor.publish('device.connections', function(deviceUuid) {
-  //check(deviceUuid, String);
-  return DeviceConnections.find({ deviceUuid });
-});
-// // 5. Publish the live stream channel
-Meteor.publish('admin.deviceStatuses', function() {
-  // If you want to be extra safe and ensure Meteor tracks changes 
-  // on every property modification, fetch explicitly:
-  return DeviceConnections.find({}, {
-    fields: {
-      deviceUuid: 1,
-      connectionId: 1,
-      ipAddress: 1,
-      status: 1,
-      lastSeen: 1,
-      rooms: 1
-    }
-  });
-});
+// Meteor.publish('device.connections', function(deviceUuid) {
+//   //check(deviceUuid, String);
+//   return DeviceConnections.find({ deviceUuid });
+// });
+// // // 5. Publish the live stream channel
+// Meteor.publish('admin.deviceStatuses', function() {
+//   // If you want to be extra safe and ensure Meteor tracks changes 
+//   // on every property modification, fetch explicitly:
+//   return DeviceConnections.find({}, {
+//     fields: {
+//       deviceUuid: 1,
+//       connectionId: 1,
+//       ipAddress: 1,
+//       status: 1,
+//       lastSeen: 1,
+//       rooms: 1
+//     }
+//   });
+// });
 // Helper to parse the JSON body without breaking Meteor's fiber/async loop
 const getRequestBody = (req) => {
   return new Promise((resolve, reject) => {

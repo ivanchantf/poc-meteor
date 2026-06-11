@@ -46,8 +46,13 @@ const injectUserID = () => {
 Meteor.startup(async () => {
 
   injectUserID() 
-  let deviceUuid = window.device.uuid;
-  document.addEventListener('deviceready', function () {
+  
+  document.addEventListener('deviceready', function () {  
+    console.log('Device is ready, initializing background mode and reactive tracking..');
+    console.log('DeviceConnections count:', DeviceConnections.find({}).count());
+    console.log('All docs:', DeviceConnections.find({}).fetch());
+
+    let deviceUuid = window.device.uuid;
     // cordova.plugins.backgroundMode is now available
     console.log('Device is ready, cordova.plugins.backgroundMode is available.');
     cordova.plugins.backgroundMode.setEnabled(true);
@@ -70,13 +75,20 @@ Meteor.startup(async () => {
       }
     });
 
-    Meteor.subscribe('device.connections', deviceUuid);
+    const connectionSub =Meteor.subscribe('device.connections', deviceUuid);
     // Subscribe to track connection states
-    Meteor.subscribe('admin.deviceStatuses');
+    const deviceStatusesSub =Meteor.subscribe('admin.deviceStatuses');
+
+
 
     // Reactively track connection rooms and handle dynamic subscriptions
+
     Tracker.autorun(() => {
-      console.log('Tracker.autorun triggered!!!!');
+      console.log('Tracker.autorun triggered!');
+  if (!connectionSub.ready()) {
+    console.log('[Tracker] Waiting for device.connections subscription to be ready.....');
+    return;
+  }
 
       // 1. Establish reactivity on the find query cursor
       const connectionCursor = DeviceConnections.find({ deviceUuid: deviceUuid });
@@ -85,8 +97,13 @@ Meteor.startup(async () => {
       const connectionDoc = connectionCursor.fetch()[0];
 
       if (!connectionDoc) {
-        console.log('[Tracker] DeviceConnections collection is currently empty for this UUID.');
-        return;
+        console.log('[Tracker] DeviceConnections collection is ❌currently empty for this UUID.',deviceUuid,JSON.stringify(connectionDoc));
+     
+         return;
+      }
+      else{
+          console.log('[Tracker] DeviceConnections collection is ✅️found for this UUID.',deviceUuid,JSON.stringify(connectionDoc));
+
       }
 
       // Extract the rooms array. Reading this property explicitly registers it as a dependency.
