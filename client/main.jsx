@@ -6,7 +6,7 @@ import { Tracker } from "meteor/tracker";
 import { queueMethod } from 'meteor/jam:offline';
 import '../imports/api/offline';
 import _ from 'lodash';
-import { DeviceMessages } from '../imports/api/deviceMessages';
+import { CollectionDown } from '../imports/api/collectionDown';
 import { DeviceConnections} from '../imports/api/deviceConnections';
 
 const injectUserID = () => {
@@ -119,15 +119,15 @@ Meteor.startup(async () => {
       // --- CLIENT-ONLY CLEANUP FOR JAM:OFFLINE ---
       // Fix: We must isolate database mutations using Tracker.nonreactive. 
       // Otherwise, deleting records inside an autorun can disrupt Meteor's reactive cycle.
-      const staleMessages = DeviceMessages.find({ roomName: { $nin: myRooms } }).fetch();
+      const staleMessages = CollectionDown.find({ roomName: { $nin: myRooms } }).fetch();
       console.log('stalemsg count:', staleMessages.length);
 
       if (staleMessages.length > 0) {
-        console.log(`[Tracker] Purging ${staleMessages.length} stale messages from local cache.`);
+        console.log(`[Tracker] Purging ${staleMessages.length} stale messages from local cache..`);
 
         Tracker.nonreactive(() => {
           staleMessages.forEach(msg => {
-            DeviceMessages._collection.remove(msg._id);
+            CollectionDown._collection.remove(msg._id);
           });
         });
       }
@@ -135,10 +135,10 @@ Meteor.startup(async () => {
 
       // 2. Dynamic Subscription
       // When 'myRooms' changes, Tracker will automatically stop the old subscription and start this new one.
-      const msgSub = Meteor.subscribe('device.messages', myRooms);
+      const msgSub = Meteor.subscribe('collectionDown', myRooms);
 
       if (msgSub.ready()) {
-        const latestMessage = DeviceMessages.find(
+        const latestMessage = CollectionDown.find(
           { roomName: { $in: myRooms } },
           { sort: { createdAt: -1 }, limit: 1 }
         ).fetch()[0];

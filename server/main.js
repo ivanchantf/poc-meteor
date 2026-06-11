@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import '../imports/api/offline';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import { logToFileByDate } from './util';
-import { DeviceMessages } from '/imports/api/deviceMessages';
+import { CollectionDown } from '../imports/api/collectionDown';
 import { DeviceConnections } from '../imports/api/deviceConnections';
 import { WebApp } from 'meteor/webapp';
 import express from 'express';
@@ -96,7 +96,7 @@ async function sendToRoom(roomName, payload) {
   console.log(`[Transport] Pushing via WebSocket to Room: ${roomName}`);
   
   // Insert the message targeted to the room using Meteor 3 async format
-  const messageId = await DeviceMessages.insertAsync({
+  const messageId = await CollectionDown.insertAsync({
     roomName, // Storing Room name instead of UUID
     payload,
     createdAt: new Date()
