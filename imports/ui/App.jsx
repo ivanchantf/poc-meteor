@@ -7,17 +7,18 @@ import { CollectionUp } from '../api/collectionUp';
 import { Meteor } from 'meteor/meteor';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 import { isSyncing } from 'meteor/jam:offline';
+import { CollectionUpDebugger } from './CollectionUpDebugger';
+import { CollectionDownDebugger } from './CollectionDownDebugger';
+// Tracker.autorun(() => {
 
-Tracker.autorun(() => {
+//   const userId = Meteor.userId();
+//   const loggingIn = Meteor.loggingIn();
+//   console.log('userID', userId)
+//   console.log('loggingIn', loggingIn)
+//   const data = CollectionUp.find({}).fetch();
+//   console.log('Meteor front -Tracker : use Collection updated, current count of CollectionUp:', data.length);
 
-  const userId = Meteor.userId();
-  const loggingIn = Meteor.loggingIn();
-  console.log('userID', userId)
-  console.log('loggingIn', loggingIn)
-  const data = CollectionUp.find({}).fetch();
-  console.log('Meteor front -Tracker : use Collection updated, current count of CollectionUp:', data.length);
-
-});
+// });
 
 export const App = () => {
 
@@ -30,13 +31,13 @@ export const App = () => {
   }, [status])
 
 
-  const { collectionUp, isLoading } = useTracker(() => {
-    const handle = Meteor.subscribe('collectionUp');
-    return {
-      isLoading: !handle.ready(),
-      collectionUp: CollectionUp.find({}).fetch(),
-    };
-  }, []);
+  // const { collectionUp, isLoading } = useTracker(() => {
+  //   const handle = Meteor.subscribe('collectionUp');
+  //   return {
+  //     isLoading: !handle.ready(),
+  //     collectionUp: CollectionUp.find({}).fetch(),
+  //   };
+  // }, []);
 
 
   const [hasSettled, setHasSettled] = useState(false);
@@ -141,7 +142,7 @@ export const App = () => {
           <iframe id="dse-front" src="http://localhost:3010" style={{ width: "100%", height: 1000 }} onError={(e) => { console.log("iframe error", e) }} ></iframe>
         </div>
 
-        {/* <div className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', border: '12px solid black', backgroundColor: '#bbbbbbff', padding: '2px', margin: '4px' }}>
+         <div className='border border-red-300' style={{ width: "100%", height: 1000, border: '1px solid green', border: '12px solid black', backgroundColor: '#bbbbbbff', padding: '2px', margin: '4px' }}>
 
           <div style={{ display: "flex", flexDirection: "column" }}>
 
@@ -149,9 +150,9 @@ export const App = () => {
 
           </div>
           <section style={{ width: "100%"}} id='minimongo-section'>
-            <h2>List of records in minimongoo</h2>
+            <h2>List of records in minimongoo [UP]</h2>
 
-            <ul style={{ fontSize: '5px', padding: 0, marginTop: 20 }}>
+            {/* <ul style={{ fontSize: '5px', padding: 0, marginTop: 20 }}>
               {collectionUp.map((collectionUp) => (
 
                 <li key={collectionUp._id + Math.random()} className='list-item'>
@@ -163,14 +164,18 @@ export const App = () => {
                 </li>
               ))}
 
-            </ul>
+            </ul> */}
+            <CollectionUpDebugger />
+            <h2>List of records in minimongoo [DOWN]</h2>
+            <CollectionDownDebugger />
+     
           </section>
 
           <div>
           
           </div>
 
-        </div> */}
+        </div> 
 
       </div>
     </div>
