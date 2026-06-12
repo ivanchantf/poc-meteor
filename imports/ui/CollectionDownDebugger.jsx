@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CollectionDown } from '../api/collectionDown';
 import { useTracker, useSubscribe } from "meteor/react-meteor-data";
 
@@ -20,6 +20,23 @@ export const CollectionDownDebugger = () => {
     if (!searchText) return true;
     return record.roomName?.toLowerCase().includes(searchText.toLowerCase());
   });
+
+
+  useEffect(()=>{
+    const iframe = document.getElementById("dse-front")
+    if (iframe && iframe.contentWindow) {
+      let payload=JSON.stringify({
+          type: 'refresh-down',
+          httpType: 'GET',
+          data: records
+        })
+      console.log("🟥Meteor front: [sending  refresh-down with collectionDown data to pwa]",records);
+      iframe.contentWindow.postMessage(
+        payload,
+        '*'
+      );
+    }
+  },[records])
 
   return (
     <div className="debugger-container">

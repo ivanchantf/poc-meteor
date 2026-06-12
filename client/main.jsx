@@ -48,7 +48,7 @@ Meteor.startup(async () => {
   injectUserID() 
   
   document.addEventListener('deviceready', function () {  
-    console.log('Device is ready, initializing background mode and reactive tracking..');
+    console.log('Device is ready, initializing background mode and reactive tracking....');
     console.log('DeviceConnections count:', DeviceConnections.find({}).count());
     console.log('All docs:', DeviceConnections.find({}).fetch());
 
@@ -240,19 +240,34 @@ Meteor.startup(async () => {
               console.error('Delete error: messageObj.data or _id property is missing.');
             }
             break;
-          case "refresh":
-            // console.log(collectionUp)
-            console.log(messageObj.collection)
+          case "refresh-up":
+
             console.log(`METEOR-FRONT:  will fetch latest collectionUp `)
 
             liRecords = await Meteor.callAsync('collectionUp.read');
 
             console.log('METEOR-FRONT: Fetched latest collectionUp from Meteor local collection:')
             console.log(liRecords)
-            console.log('🟥METEOR-FRONT:Sending liRecords from meteor to pwa')
+            console.log('🟥METEOR-FRONT:Sending collectionUp from meteor to pwa')
             let iframe = document.getElementById("dse-front");
             if (iframe) {
-              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh', 'from': 'meteor-front', 'data': liRecords }), '*');
+              iframe?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh-up', 'from': 'meteor-front', 'data': liRecords }), '*');
+
+            }
+
+            break;
+          case "refresh-down":
+
+            console.log(`METEOR-FRONT:  will fetch latest collectionDown `)
+
+             liRecords = CollectionDown.find({}, { sort: { createdAt: -1 } }).fetch();
+
+            console.log('METEOR-FRONT: Fetched latest collectionDown from Meteor local collection:')
+            console.log(liRecords)
+            console.log('🟥METEOR-FRONT:Sending collectionDown from meteor to pwa')
+            let iframe2 = document.getElementById("dse-front");
+            if (iframe2) {
+              iframe2?.contentWindow?.postMessage(JSON.stringify({ 'type': 'refresh-down', 'from': 'meteor-front', 'data': liRecords }), '*');
 
             }
 

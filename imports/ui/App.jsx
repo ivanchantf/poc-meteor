@@ -74,11 +74,11 @@ export const App = () => {
     const iframe = document.getElementById("dse-front")
     if (iframe && iframe.contentWindow) {
       let payload=JSON.stringify({
-          type: 'refresh',
+          type: 'refresh-up',
           httpType: 'GET',
           data: data
         })
-      console.log("🟥Meteor front: postmessage refresh [sending data to pwa]",payload);
+      console.log("🟥Meteor front: postmessage refresh-up [sending data to pwa]",payload);
       iframe.contentWindow.postMessage(
         payload,
         '*'
